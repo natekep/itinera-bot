@@ -1,0 +1,370 @@
+openapi: 3.1.0
+info:
+  title: Itinera API
+  description: API for Itinera - AI-powered conversational travel planner.
+  version: 0.1.0
+servers:
+  - url: https://api.itinera.ai/v1
+    description: Production server
+  - url: http://localhost:8000/v1
+    description: Local development server
+tags:
+  - name: Users
+    description: Endpoints for user management
+  - name: Chat
+    description: Endpoints for interacting with the AI chatbot
+  - name: Itineraries
+    description: Endpoints for itinerary generation, retrieval, updates, feedback, explanations, and deletion
+  - name: Activities
+    description: Endpoints for retrieving activities
+
+paths:
+  /users:
+    post:
+      tags: [Users]
+      summary: Create a new user
+      requestBody:
+        description: User registration info
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [name, email, password]
+              properties:
+                name:
+                  type: string
+                email:
+                  type: string
+                  format: email
+                password:
+                  type: string
+      responses:
+        "201":
+          description: User created successfully
+        "400":
+          description: Invalid input
+
+  /users/{userId}:
+    get:
+      tags: [Users]
+      summary: Get user details
+      parameters:
+        - name: userId
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: User details retrieved
+        "404":
+          description: User not found
+    delete:
+      tags: [Users]
+      summary: Delete a user
+      parameters:
+        - name: userId
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        "204":
+          description: User deleted successfully
+        "404":
+          description: User not found
+
+  /chat:
+    post:
+      tags: [Chat]
+      summary: Send a message to Itinera chatbot
+      requestBody:
+        description: User message to the chatbot
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [userId, message]
+              properties:
+                userId:
+                  type: string
+                message:
+                  type: string
+                context:
+                  type: object
+                  description: Optional context to maintain conversation state
+      responses:
+        "200":
+          description: Chatbot response with suggested itinerary items or questions
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  reply:
+                    type: string
+                  suggestedActivities:
+                    type: array
+                    items:
+                      $ref: "#/components/schemas/Activity"
+        "400":
+          description: Invalid input
+
+  /itineraries:
+    post:
+      tags: [Itineraries]
+      summary: Generate an itinerary based on user preferences
+      requestBody:
+        description: User preferences and constraints for itinerary generation
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [userId, destination]
+              properties:
+                userId:
+                  type: string
+                destination:
+                  type: string
+                startDate:
+                  type: string
+                  format: date
+                endDate:
+                  type: string
+                  format: date
+                budget:
+                  type: number
+                  format: float
+                interests:
+                  type: array
+                  items:
+                    type: string
+                constraints:
+                  type: object
+                  properties:
+                    maxTravelTimePerDay:
+                      type: string
+                      description: e.g., "2h"
+                    avoidWeather:
+                      type: string
+                      description: e.g., "rain"
+      responses:
+        "200":
+          description: Itinerary generated successfully
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Itinerary"
+        "400":
+          description: Invalid input
+
+  /itineraries/{itineraryId}:
+    get:
+      tags: [Itineraries]
+      summary: Retrieve a saved itinerary
+      parameters:
+        - name: itineraryId
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Saved itinerary retrieved successfully
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Itinerary"
+        "404":
+          description: Itinerary not found
+    put:
+      tags: [Itineraries]
+      summary: Update an existing itinerary
+      parameters:
+        - name: itineraryId
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        description: Updated itinerary details
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/Itinerary"
+      responses:
+        "200":
+          description: Itinerary updated successfully
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Itinerary"
+        "400":
+          description: Invalid input
+        "404":
+          description: Itinerary not found
+    delete:
+      tags: [Itineraries]
+      summary: Delete an itinerary
+      parameters:
+        - name: itineraryId
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        "204":
+          description: Itinerary deleted successfully
+        "404":
+          description: Itinerary not found
+
+  /itineraries/{itineraryId}/feedback:
+    post:
+      tags: [Itineraries]
+      summary: Submit feedback on an itinerary
+      parameters:
+        - name: itineraryId
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        description: Feedback details
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [userId, rating, comment]
+              properties:
+                userId:
+                  type: string
+                rating:
+                  type: integer
+                  minimum: 1
+                  maximum: 5
+                comment:
+                  type: string
+      responses:
+        "201":
+          description: Feedback submitted successfully
+        "400":
+          description: Invalid input
+        "404":
+          description: Itinerary not found
+
+  /itineraries/{itineraryId}/explanation:
+    get:
+      tags: [Itineraries]
+      summary: Retrieve an explanation of why an itinerary was generated
+      parameters:
+        - name: itineraryId
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Explanation retrieved successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  itineraryId:
+                    type: string
+                  explanation:
+                    type: string
+        "404":
+          description: Itinerary not found
+
+  /activities:
+    get:
+      tags: [Activities]
+      summary: Retrieve available activities for a destination
+      parameters:
+        - name: destination
+          in: query
+          required: true
+          schema:
+            type: string
+        - name: date
+          in: query
+          required: false
+          schema:
+            type: string
+            format: date
+      responses:
+        "200":
+          description: List of activities
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Activity"
+        "404":
+          description: No activities found
+
+components:
+  schemas:
+    Activity:
+      type: object
+      properties:
+        id:
+          type: string
+        name:
+          type: string
+        description:
+          type: string
+        location:
+          type: string
+        category:
+          type: string
+        price:
+          type: number
+          format: float
+        duration:
+          type: string
+          description: e.g., "2h"
+        recommendedTime:
+          type: string
+          description: e.g., "Morning"
+        weatherSuitability:
+          type: array
+          items:
+            type: string
+    Itinerary:
+      type: object
+      properties:
+        userId:
+          type: string
+        destination:
+          type: string
+        startDate:
+          type: string
+          format: date
+        endDate:
+          type: string
+          format: date
+        totalBudget:
+          type: number
+          format: float
+        dailyPlans:
+          type: array
+          items:
+            type: object
+            properties:
+              date:
+                type: string
+                format: date
+              activities:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Activity"
+              explanation:
+                type: string
