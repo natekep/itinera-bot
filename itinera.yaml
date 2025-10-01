@@ -78,39 +78,167 @@ paths:
   /chat:
     post:
       tags: [Chat]
-      summary: Send a message to Itinera chatbot
+      summary: Create a chat completion
+      description: >
+        Send a turn of conversation and receive the assistant's reply. Uses OpenAI-style
+        request/response shape (messages[], choices[], usage). No streaming.
       requestBody:
-        description: User message to the chatbot
         required: true
         content:
           application/json:
             schema:
               type: object
-              required: [userId, message]
+              required: [messages]
               properties:
                 userId:
                   type: string
-                message:
-                  type: string
+                  description: Optional application user id
+                messages:
+                  type: array
+                  description: OpenAI-style chat messages history
+                  items:
+                    type: object
+                    required: [role, content]
+                    properties:
+                      role:
+                        type: string
+                        enum: [system, user, assistant, tool]
+                      content:
+                        type: string
+                      name:
+                        type: string
+                        description: Tool name when role=tool
                 context:
                   type: object
-                  description: Optional context to maintain conversation state
+                  description: Optional app-specific context (metadata you pass to your backend)
+                temperature:
+                  type: number
+                  minimum: 0
+                  maximum: 2
+                  default: 0.5
       responses:
         "200":
-          description: Chatbot response with suggested itinerary items or questions
+          description: Chat completion result (OpenAI-style)
           content:
             application/json:
               schema:
                 type: object
                 properties:
-                  reply:
+                  id:
                     type: string
-                  suggestedActivities:
+                  object:
+                    type: string
+                  created:
+                    type: integer
+                  choices:
                     type: array
                     items:
-                      $ref: "#/components/schemas/Activity"
+                      type: object
+                      properties:
+                        index:
+                          type: integer
+                        finish_reason:
+                          type: string
+                          enum: [stop, length, content_filter, tool_calls]
+                          example: stop
+                        message:
+                          type: object
+                          properties:
+                            role:
+                              type: string
+                              enum: [assistant]
+                              example: assistant
+                            content:
+                              type: string
+                              example: "Here’s a 2-day plan for Vegas..."
+                  usage:
+                    type: object
+                    properties:
+                      prompt_tokens: { type: integer, example: 120 }
+                      completion_tokens: { type: integer, example: 80 }
+                      total_tokens: { type: integer, example: 200 }
         "400":
           description: Invalid input
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  error:
+                    type: object
+                    required: [message, type]
+                    properties:
+                      message: { type: string, example: "messages is required" }
+                      type: { type: string, example: "invalid_request_error" }
+
+  /chat/{conversationId}:
+    put:
+      tags: [Chat]
+      summary: Update/replace a conversation state (messages or system context)
+      description: >
+        Replace or amend a conversation’s stored state so the next POST /chat turn can continue
+        from this updated history.
+      parameters:
+        - name: conversationId
+          in: path
+          required: true
+          schema: { type: string }
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                messages:
+                  type: array
+                  description: Full replacement or appended set of messages to persist
+                  items:
+                    type: object
+                    required: [role, content]
+                    properties:
+                      role: { type: string, enum: [system, user, assistant, tool] }
+                      content: { type: string }
+                      name: { type: string }
+                context:
+                  type: object
+                  description: Optional metadata to persist with the conversation
+      responses:
+        "200":
+          description: Conversation state saved
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  conversationId: { type: string }
+                  messages:
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        role: { type: string }
+                        content: { type: string }
+                        name: { type: string }
+                  context:
+                    type: object
+        "400":
+          description: Invalid input
+    delete:
+      tags: [Chat]
+      summary: Delete a conversation
+      description: Permanently deletes the stored conversation state for the given id.
+      parameters:
+        - name: conversationId
+          in: path
+          required: true
+          schema: { type: string }
+      responses:
+        "204":
+          description: Conversation deleted
+        "404":
+          description: Conversation not found
+
 
   /itineraries:
     post:
