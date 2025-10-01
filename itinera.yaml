@@ -74,7 +74,62 @@ paths:
           description: User deleted successfully
         "404":
           description: User not found
-
+    put:
+      tags: [Users]
+      summary: Update user details
+      parameters:
+        - name: userId
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        description: Updated user info
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                name: 
+                  type: string
+                email:
+                  type: string
+                  format: email
+                password:
+                  type: string
+      responses:
+        "200":
+          description: User updated successfully
+        "400":
+          description: Invalid input
+        "404":
+          description: User not found
+  
+  /user/me:
+    get:
+      tags: [Users]
+      summary: Get current user's info
+      security: 
+        - OAuth2: [openid, email, profile]
+      responses:
+        "200":
+          description: Current user deatils
+          content:
+            application/json:
+              schema:
+                type: object
+                properties: 
+                  id:
+                   type: string
+                   example: "123"   # for testing
+                  name:
+                    type: string
+                    example: "iram"   # for testing
+                  email:
+                    type: string
+                    example: "iram@example.com"   # for testing
+                    
   /chat:
     post:
       tags: [Chat]
@@ -368,3 +423,14 @@ components:
                   $ref: "#/components/schemas/Activity"
               explanation:
                 type: string
+  securitySchemes:
+    OAuth2:
+      type: oauth2
+      flows: 
+        authorizationCode:
+          authorizationUrl: https://example.com/oauth/authorize # https://accounts.google.com/o/oauth2/v2/auth
+          tokenUrl: https://example.com/oauth/token    #https://oauth2.googleapis.com/token
+          scopes:
+            openid: OpenId Connect
+            email: Access to your email
+            profile: Access to your profile
