@@ -282,25 +282,24 @@ paths:
         "404":
           description: Itinerary not found
 
-  /activities:
+  /users/{userId}/itineraries/{itineraryId}/activities:
     get:
       tags: [Activities]
-      summary: Retrieve available activities for a destination
+      summary: Retrieve all activities for a given itinerary
       parameters:
-        - name: destination
-          in: query
+        - name: userId
+          in: path
           required: true
           schema:
             type: string
-        - name: date
-          in: query
-          required: false
+        - name: itineraryId
+          in: path
+          required: true
           schema:
             type: string
-            format: date
       responses:
         "200":
-          description: List of activities
+          description: List of activities in the itinerary
           content:
             application/json:
               schema:
@@ -309,6 +308,126 @@ paths:
                   $ref: "#/components/schemas/Activity"
         "404":
           description: No activities found
+
+    post:
+      tags: [Activities]
+      summary: Add a new activity to the itinerary
+      parameters:
+        - name: userId
+          in: path
+          required: true
+          schema:
+            type: string
+        - name: itineraryId
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/Activity"
+      responses:
+        "201":
+          description: Activity added
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Activity"
+        "400":
+          description: Invalid input
+
+  /users/{userId}/itineraries/{itineraryId}/activities/{activityId}:
+    get:
+      tags: [Activities]
+      summary: Retrieve details of a specific activity in an itinerary
+      parameters:
+        - name: userId
+          in: path
+          required: true
+          schema:
+            type: string
+        - name: itineraryId
+          in: path
+          required: true
+          schema:
+            type: string
+        - name: activityId
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Activity details
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Activity"
+        "404":
+          description: Activity not found
+
+    put:
+      tags: [Activities]
+      summary: Update an activity in an itinerary
+      parameters:
+        - name: userId
+          in: path
+          required: true
+          schema:
+            type: string
+        - name: itineraryId
+          in: path
+          required: true
+          schema:
+            type: string
+        - name: activityId
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/Activity"
+      responses:
+        "200":
+          description: Activity updated
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Activity"
+        "404":
+          description: Activity not found
+
+    delete:
+      tags: [Activities]
+      summary: Delete an activity from an itinerary
+      parameters:
+        - name: userId
+          in: path
+          required: true
+          schema:
+            type: string
+        - name: itineraryId
+          in: path
+          required: true
+          schema:
+            type: string
+        - name: activityId
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        "204":
+          description: Activity deleted
+        "404":
+          description: Activity not found
 
 components:
   schemas:
