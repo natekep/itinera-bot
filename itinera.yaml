@@ -112,10 +112,16 @@ paths:
         "400":
           description: Invalid input
 
-  /itineraries:
+  /users/{userId}/itineraries:
     post:
       tags: [Itineraries]
       summary: Generate an itinerary based on user preferences
+      parameters:
+        - name: userId
+          in: path
+          required: true
+          schema:
+            type: string
       requestBody:
         description: User preferences and constraints for itinerary generation
         required: true
@@ -161,11 +167,16 @@ paths:
         "400":
           description: Invalid input
 
-  /itineraries/{itineraryId}:
+  /users/{userId}/itineraries/{itineraryId}:
     get:
       tags: [Itineraries]
       summary: Retrieve a saved itinerary
       parameters:
+        - name: userId
+          in: path
+          required: true
+          schema:
+            type: string
         - name: itineraryId
           in: path
           required: true
@@ -184,6 +195,11 @@ paths:
       tags: [Itineraries]
       summary: Update an existing itinerary
       parameters:
+        - name: userId
+          in: path
+          required: true
+          schema:
+            type: string
         - name: itineraryId
           in: path
           required: true
@@ -211,6 +227,11 @@ paths:
       tags: [Itineraries]
       summary: Delete an itinerary
       parameters:
+        - name: userId
+          in: path
+          required: true
+          schema:
+            type: string
         - name: itineraryId
           in: path
           required: true
@@ -222,11 +243,16 @@ paths:
         "404":
           description: Itinerary not found
 
-  /itineraries/{itineraryId}/feedback:
+  /users/{userId}/itineraries/{itineraryId}/feedback:
     post:
       tags: [Itineraries]
       summary: Submit feedback on an itinerary
       parameters:
+        - name: userId
+          in: path
+          required: true
+          schema:
+            type: string
         - name: itineraryId
           in: path
           required: true
@@ -257,11 +283,16 @@ paths:
         "404":
           description: Itinerary not found
 
-  /itineraries/{itineraryId}/explanation:
+  /users/{userId}/itineraries/{itineraryId}/explanation:
     get:
       tags: [Itineraries]
       summary: Retrieve an explanation of why an itinerary was generated
       parameters:
+        - name: userId
+          in: path
+          required: true
+          schema:
+            type: string
         - name: itineraryId
           in: path
           required: true
