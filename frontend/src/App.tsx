@@ -1,25 +1,24 @@
-import { useEffect, useState } from "react";
+import { BrowserRouter as Router, Routes, Route } from "react-router-dom";
+import Navbar from "./components/Navbar";
+import SignUp from "./pages/SignUp";
+import Home from "./pages/Home";
+import Login from "./pages/Login";
+import Explore from "./pages/Explore";
+import CreateItinerary from "./pages/CreateItinerary";
 
-function App() {
-  const [message, setMessage] = useState("Loading...");
-
-  // Call FastAPI backend when component loads
-  useEffect(() => {
-    fetch("http://127.0.0.1:8000/") // <-- your FastAPI GET /
-      .then((res) => res.json())
-      .then((data) => setMessage(data.message))
-      .catch((err) => {
-        console.error("Error fetching from backend:", err);
-        setMessage("Backend not available");
-      });
-  }, []);
-
+export default function App() {
   return (
-    <div style={{ textAlign: "center", marginTop: "50px" }}>
-      <h1>Itinera Frontend</h1>
-      <p>{message}</p>
+    <div className="bg-black min-h-screen">
+      <Router>
+        <Navbar />
+        <Routes>
+          <Route path="/" element={<Home />} />
+          <Route path="/signup" element={<SignUp />} />
+          <Route path="/login" element={<Login />} />
+          <Route path="/explore" element={<Explore />} />
+          <Route path="/create" element={<CreateItinerary />} />
+        </Routes>
+      </Router>
     </div>
   );
 }
-
-export default App;
