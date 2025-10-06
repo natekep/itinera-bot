@@ -5,6 +5,7 @@ import Home from "./pages/Home";
 import Login from "./pages/Login";
 import Explore from "./pages/Explore";
 import CreateItinerary from "./pages/CreateItinerary";
+import { supabase } from "./supabaseClient";
 
 export default function App() {
   return (
