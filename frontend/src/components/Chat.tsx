@@ -36,7 +36,7 @@ export default function Chat() {
       content: input.trim(),
     };
 
-    // Add user message to chat immediately (optimistic update)
+    // Add user message to chat immediately 
     setMessages((prev) => [...prev, userMessage]);
     
     setInput('');
@@ -188,6 +188,8 @@ const styles: { [key: string]: React.CSSProperties } = {
     display: 'flex',
     flexDirection: 'column',
     height: '100vh',
+    width: '100vw',
+
     backgroundColor: '#212121',
     color: '#ececec',
     fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif',
