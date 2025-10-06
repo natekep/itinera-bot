@@ -1,4 +1,29 @@
+import { useState } from "react";
+import type { FormEvent } from "react";
+import { supabase } from "../supabaseClient";
+import { useNavigate } from "react-router-dom";
+
 export default function Login() {
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
+  const navigate = useNavigate();
+
+  async function handleLogin(e: FormEvent<HTMLFormElement>) {
+    e.preventDefault(); // prevents page reload when form is submitted
+
+    const { data, error } = await supabase.auth.signInWithPassword({
+      email: email,
+      password: password,
+    });
+
+    if (error) {
+      alert(error.message);
+    } else {
+      alert("Log in is succesful!");
+      navigate("/");
+    }
+  }
+
   return (
     <div className="mt-20 bg-white rounded-xl shadow-lg p-8 w-[90%] max-w-md mx-auto">
       <h1 className="text-xl">Login</h1>
@@ -6,16 +31,20 @@ export default function Login() {
         Log back in to view saved itineraries and activities for your future
         vacations!
       </p>
-      <form className="flex flex-col gap-4 w-full mt-5">
+      <form onSubmit={handleLogin} className="flex flex-col gap-4 w-full mt-5">
         <input
           type="email"
           placeholder="Email"
           className="border border-gray-300 rounded-lg p-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
+          value={email}
+          onChange={(e) => setEmail(e.target.value)}
         />
         <input
           type="password"
           placeholder="Password"
           className="border border-gray-300 rounded-lg p-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
+          value={password}
+          onChange={(e) => setPassword(e.target.value)}
         />
         <button
           type="submit"
@@ -24,10 +53,14 @@ export default function Login() {
           Continue
         </button>
         <p className="text-gray-500  mx-auto">
-          ------------ or log in with ------------
+          ------------ need to create an account? ------------
         </p>
-        <button className="bg-black text-white py-2 rounded-lg hover:bg-gray-800">
-          Continue with Google
+        <button
+          type="button"
+          onClick={() => navigate("/signup")}
+          className="bg-black text-white py-2 rounded-lg hover:bg-gray-800"
+        >
+          Sign Up
         </button>
       </form>
     </div>

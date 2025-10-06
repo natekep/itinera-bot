@@ -33,7 +33,7 @@ export default function SignUp() {
   }
 
   return (
-    <div className="mt-20 bg-white rounded-xl shadow-lg p-8 w-[90%] max-w-md mx-auto">
+    <div className="mt-20 bg-white rounded-xl shadow-lg p-8 w-[100%] max-w-md mx-auto">
       <h1 className="text-xl">Sign Up</h1>
       <p className="text-gray-500 mt-2">
         Make an account to save itineraries and activities for your future
@@ -74,10 +74,16 @@ export default function SignUp() {
           Get Started!
         </button>
         <p className="text-gray-500  mx-auto">
-          ------------ or sign up with ------------
+          ------------ already have an account? ------------
         </p>
-        <button className="bg-black text-white py-2 rounded-lg hover:bg-gray-800">
-          Continue with Google
+        <button
+          type="button"
+          onClick={() => {
+            navigate("/login");
+          }}
+          className="bg-black text-white py-2 rounded-lg hover:bg-gray-800"
+        >
+          Login
         </button>
       </form>
     </div>
