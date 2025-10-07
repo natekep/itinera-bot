@@ -1,11 +1,14 @@
+// src/App.tsx
+import { BrowserRouter as Router, Routes, Route, Link } from "react-router-dom";
 import { useEffect, useState } from "react";
+import Maps from "./pages/maps";
+import "./styles/app.css"; // add a CSS file for styling
 
-function App() {
+function HomePage() {
   const [message, setMessage] = useState("Loading...");
 
-  // Call FastAPI backend when component loads
   useEffect(() => {
-    fetch("http://127.0.0.1:8000/") // <-- your FastAPI GET /
+    fetch("http://127.0.0.1:8000/")
       .then((res) => res.json())
       .then((data) => setMessage(data.message))
       .catch((err) => {
@@ -15,10 +18,24 @@ function App() {
   }, []);
 
   return (
-    <div style={{ textAlign: "center", marginTop: "50px" }}>
+    <div className="home-container">
       <h1>Itinera Frontend</h1>
       <p>{message}</p>
+      <Link to="/maps" className="home-link">
+        👉 Go to Maps
+      </Link>
     </div>
+  );
+}
+
+function App() {
+  return (
+    <Router>
+      <Routes>
+        <Route path="/" element={<HomePage />} />
+        <Route path="/maps" element={<Maps />} />
+      </Routes>
+    </Router>
   );
 }
 

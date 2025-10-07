@@ -1,0 +1,7 @@
+/* mapview.css */
+.map-container {
+  width: 100%;
+  height: 500px; /* or 100% if parent has height */
+  border: 1px solid #ccc;
+  border-radius: 8px;
+}
