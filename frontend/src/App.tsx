@@ -1,7 +1,7 @@
 // src/App.tsx
 import { BrowserRouter as Router, Routes, Route, Link } from "react-router-dom";
 import { useEffect, useState } from "react";
-import Maps from "./pages/maps";
+import Maps from "./pages/Maps";
 import "./styles/app.css"; // add a CSS file for styling
 
 function HomePage() {

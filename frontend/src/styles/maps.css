@@ -1,19 +1,20 @@
 .maps-container {
   display: flex;
-  gap: 20px;
-  padding: 20px;
-  font-family: Arial, Helvetica, sans-serif;
-  height: calc(100vh - 40px); /* full height minus padding */
+  height: 100vh; /* Full viewport height */
+  width: 100vw;  /* Full viewport width */
+  overflow: hidden;
 }
 
 .maps-left {
-  width: 350px;
-  display: flex;
-  flex-direction: column;
-  gap: 20px;
+  width: 300px;  
+  background: #f0f0f0;
+  padding: 20px;
+  box-sizing: border-box;
+  overflow-y: auto;
 }
 
 .maps-right {
-  flex: 1;
-  height: 100%;
+  flex: 1;               
+  height: 100vh;         
+  position: relative;    
 }

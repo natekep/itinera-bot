@@ -1,68 +1,57 @@
 import React, { useEffect, useRef } from "react";
-import "../styles/mapview.css";
 
 interface MapViewProps {
-  coords: { lat: number; lng: number }[];
+  coords: { lat: number; lng: number; name: string }[];
+  apiKey: string;
 }
 
-const MapView: React.FC<MapViewProps> = ({ coords }) => {
+const MapView: React.FC<MapViewProps> = ({ coords, apiKey }) => {
   const mapRef = useRef<HTMLDivElement>(null);
-  const mapInstance = useRef<InstanceType<typeof window.google.maps.Map> | null>(null);
-  const routePath = useRef<InstanceType<typeof window.google.maps.Polyline> | null>(null);
-  const markers = useRef<InstanceType<typeof window.google.maps.Marker>[]>([]);
-
 
   useEffect(() => {
-    if (!mapRef.current) return;
+    const initMap = () => {
+      if (!mapRef.current || coords.length === 0) return;
 
-    const g = window.google;
-if (!g || !g.maps) return;
-
-const map = new g.maps.Map(mapRef.current!, {
-  center: { lat: 37.7749, lng: -122.4194 },
-  zoom: 6,
-});
-mapInstance.current = map;
-  }, []);
-  useEffect(() => {
-    const g = window.google;
-    if (!g || !g.maps || !mapInstance.current) return;
-
-    const map = mapInstance.current;
-
-    // Clear previous route and markers
-    routePath.current?.setMap(null);
-    markers.current.forEach((m) => m.setMap(null));
-    markers.current = [];
-
-    // Add markers
-    coords.forEach((c, i) => {
-      const marker = new g.maps.Marker({
-        position: c,
-        map,
-        label: String.fromCharCode(65 + i), // A, B, C...
+      const map = new window.google.maps.Map(mapRef.current, {
+        center: coords[0],
+        zoom: 10,
       });
-      markers.current.push(marker);
-    });
 
-    // Draw polyline if more than 1 point
-    if (coords.length > 1) {
-      const polyline = new g.maps.Polyline({
-        path: coords,
-        geodesic: true,
-        strokeColor: "#4285F4",
-        strokeOpacity: 0.8,
-        strokeWeight: 4,
+      const bounds = new window.google.maps.LatLngBounds();
+
+      coords.forEach((point, index) => {
+        new window.google.maps.Marker({
+          position: point,
+          map,
+          title: point.name, // ✅ show name as marker title
+        });
+        bounds.extend(point);
       });
-      polyline.setMap(map);
-      routePath.current = polyline;
+
+      if (coords.length > 1) {
+        new window.google.maps.Polyline({
+          path: coords,
+          geodesic: true,
+          strokeColor: "#4285F4",
+          strokeOpacity: 1.0,
+          strokeWeight: 3,
+          map,
+        });
+      }
+
+      map.fitBounds(bounds);
+    };
+
+    if (!window.google || !window.google.maps) {
+      const script = document.createElement("script");
+      script.src = `https://maps.googleapis.com/maps/api/js?key=${apiKey}&libraries=places`;
+      script.async = true;
+      script.onload = initMap;
+      document.body.appendChild(script);
+    } else {
+      initMap();
     }
-
-    // Fit map to bounds
-    const bounds = new g.maps.LatLngBounds();
-    coords.forEach((c) => bounds.extend(c));
-    map.fitBounds(bounds);
-  }, [coords]);
+  }, [coords, apiKey]);
 
   return <div ref={mapRef} className="map-container" />;
 };
