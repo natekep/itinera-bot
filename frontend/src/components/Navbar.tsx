@@ -70,7 +70,7 @@ export default function Navbar() {
             </button>
           ) : (
             <Link to="/signup">
-              <button className="bg-black text-white px-5 py-2 rounded-full hover:bg-gray-300">
+              <button className="bg-[#81b4fa] text-white px-5 py-2 rounded-full hover:bg-gray-300">
                 Sign Up
               </button>
             </Link>
