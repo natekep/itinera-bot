@@ -6,10 +6,15 @@ import Login from "./pages/Login";
 import Explore from "./pages/Explore";
 import CreateItinerary from "./pages/CreateItinerary";
 import { supabase } from "./supabaseClient";
+import Onboarding from "./pages/Onboarding";
+import Trevor from "./pages/Trevor";
+import Iram from "./pages/Iram";
+import Nate from "./pages/Nate";
+import Hongjie from "./pages/Hongjie";
 
 export default function App() {
   return (
-    <div className="bg-black min-h-screen">
+    <div>
       <Router>
         <Navbar />
         <Routes>
@@ -18,6 +23,11 @@ export default function App() {
           <Route path="/login" element={<Login />} />
           <Route path="/explore" element={<Explore />} />
           <Route path="/create" element={<CreateItinerary />} />
+          <Route path="/onboarding" element={<Onboarding />} />
+          <Route path="/trevor" element={<Trevor />} />
+          <Route path="/iram" element={<Iram />} />
+          <Route path="/nate" element={<Nate />} />
+          <Route path="/hongjie" element={<Hongjie />} />
         </Routes>
       </Router>
     </div>

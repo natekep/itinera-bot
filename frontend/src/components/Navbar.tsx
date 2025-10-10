@@ -26,7 +26,7 @@ export default function Navbar() {
         <div className="">
           <img className="w-25" src={ItineraLogo}></img>
         </div>
-        <div className="text-white">
+        <div className="text-black">
           <ul className=" flex items-center gap-[6vw]">
             <li>
               <Link className="hover:text-gray-500" to="/">
@@ -39,13 +39,23 @@ export default function Navbar() {
               </Link>
             </li>
             <li>
-              <Link className="hover:text-gray-500" to="/explore">
-                Explore
+              <Link className="hover:text-gray-500" to="/trevor">
+                Trevor
               </Link>
             </li>
             <li>
-              <Link className="hover:text-gray-500" to="/about">
-                About Us
+              <Link className="hover:text-gray-500" to="/iram">
+                Iram
+              </Link>
+            </li>
+            <li>
+              <Link className="hover:text-gray-500" to="/hongjie">
+                Hongjie
+              </Link>
+            </li>
+            <li>
+              <Link className="hover:text-gray-500" to="/nate">
+                Nate
               </Link>
             </li>
           </ul>
@@ -60,7 +70,7 @@ export default function Navbar() {
             </button>
           ) : (
             <Link to="/signup">
-              <button className="bg-white text-black px-5 py-2 rounded-full hover:bg-gray-300">
+              <button className="bg-black text-white px-5 py-2 rounded-full hover:bg-gray-300">
                 Sign Up
               </button>
             </Link>

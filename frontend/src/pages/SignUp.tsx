@@ -28,7 +28,7 @@ export default function SignUp() {
       alert(error.message);
     } else {
       alert("Sign up is succesful!");
-      navigate("/");
+      navigate("/onboarding");
     }
   }
 

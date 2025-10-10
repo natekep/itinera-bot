@@ -3,5 +3,10 @@
   "references": [
     { "path": "./tsconfig.app.json" },
     { "path": "./tsconfig.node.json" }
-  ]
+  ],
+  "compilerOptions": {
+    "types": ["@types/google.maps"],
+    "strict": true,
+    "jsx": "react-jsx"
+  }
 }
