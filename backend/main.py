@@ -9,8 +9,14 @@ from typing import List, Literal
 from openai import OpenAI  # Changed import
 from dotenv import load_dotenv
 
+load_dotenv()
+
+import hotel
+import flight
 
 app = FastAPI()
+app.include_router(hotel.router)
+app.include_router(flight.router)
 
 # CORS (Cross-Origin Resource Sharing) prohibits unauthorized websites, endpoints, or servers from accessing the API
 
