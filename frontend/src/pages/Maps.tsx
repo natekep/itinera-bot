@@ -10,18 +10,24 @@ const Maps: React.FC = () => {
 
   // 1️⃣ Load Google Maps API first
   useEffect(() => {
-    if (window.google) return; // already loaded
+  if (window.google && window.google.maps) return; // already loaded
 
-    const script = document.createElement("script");
-    script.src = `https://maps.googleapis.com/maps/api/js?key=${apiKey}&libraries=places`;
-    script.async = true;
-    document.body.appendChild(script);
+  const script = document.createElement("script");
+  script.src = `https://maps.googleapis.com/maps/api/js?key=${apiKey}&libraries=places`;
+  script.async = true;  // ✅ correct way
+  script.defer = true;  // ✅ optional, but recommended
+  document.body.appendChild(script);
 
-    script.onload = () => {
-      console.log("Google Maps API loaded");
-      getCurrentLocation();
-    };
-  }, []);
+  script.onload = () => {
+    console.log("✅ Google Maps API loaded");
+    getCurrentLocation();
+  };
+
+  script.onerror = () => {
+    console.error("❌ Failed to load Google Maps script");
+  };
+}, []);
+
 
   // 2️⃣ Get current location and reverse geocode
   const getCurrentLocation = () => {
