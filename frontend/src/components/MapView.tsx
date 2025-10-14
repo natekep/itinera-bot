@@ -20,13 +20,17 @@ const MapView: React.FC<MapViewProps> = ({ coords }) => {
 
     const g = window.google;
     if (!g || !g.maps) return;
+    const USA_CENTER = { lat: 39.8283, lng: -98.5795 }; // Geographic center of the US
+    const USA_ZOOM = 4; 
 
     const map = new g.maps.Map(mapRef.current!, {
-      center: { lat: 37.7749, lng: -122.4194 },
-      zoom: 6,
+      center: USA_CENTER,
+      zoom: USA_ZOOM,
     });
     mapInstance.current = map;
   }, []);
+
+  // To draw markers and routes
   useEffect(() => {
     const g = window.google;
     if (!g || !g.maps || !mapInstance.current) return;
@@ -64,7 +68,10 @@ const MapView: React.FC<MapViewProps> = ({ coords }) => {
     // Fit map to bounds
     const bounds = new g.maps.LatLngBounds();
     coords.forEach((c) => bounds.extend(c));
-    map.fitBounds(bounds);
+    // Only call fitBounds if there are actual coordinates
+    if (!bounds.isEmpty()) { 
+        map.fitBounds(bounds);
+    }
   }, [coords]);
 
   return <div ref={mapRef} className="map-container" />;

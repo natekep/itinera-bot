@@ -6,6 +6,7 @@ import RoutePanel from "../components/RoutePanel";
 import "../styles/mapview.css";
 import "../styles/sidebar.css";
 import "../styles/maps.css";
+import "../styles/routepanel.css";
 
 const Iram: React.FC = () => {
   const [origin, setOrigin] = useState("");
@@ -14,6 +15,8 @@ const Iram: React.FC = () => {
   const [routes, setRoutes] = useState<any[]>([]);
   const [places, setPlaces] = useState<any[]>([]);
   const [budget, setBudget] = useState("medium");
+  const [originTimezone, setOriginTimezone] = useState<string>('');
+  const [destinationTimezone, setDestinationTimezone] = useState<string>('');
 
   return (
     <div className="maps-container">
@@ -29,6 +32,10 @@ const Iram: React.FC = () => {
           setCoords={setCoords} /* 🔹 pass setCoords here */
           budget={budget}
           setBudget={setBudget}
+          originTimezone={originTimezone}
+          destinationTimezone={destinationTimezone}
+          setOriginTimezone={setOriginTimezone}
+          setDestinationTimezone={setDestinationTimezone}
         />
 
         <PlaceSidebar

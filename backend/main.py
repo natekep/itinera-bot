@@ -9,7 +9,7 @@ from typing import List, Literal
 from openai import OpenAI  # Changed import
 from dotenv import load_dotenv
 
-
+load_dotenv()
 app = FastAPI()
 
 # CORS (Cross-Origin Resource Sharing) prohibits unauthorized websites, endpoints, or servers from accessing the API
