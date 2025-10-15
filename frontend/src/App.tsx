@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 <<<<<<< Updated upstream
 // src/App.tsx
 import { BrowserRouter as Router, Routes, Route, Link } from "react-router-dom";
@@ -18,6 +19,8 @@ function HomePage() {
       });
   }, []);
 =======
+=======
+>>>>>>> main
 import { BrowserRouter as Router, Routes, Route } from "react-router-dom";
 import Navbar from "./components/Navbar";
 import SignUp from "./pages/SignUp";
@@ -31,9 +34,14 @@ import Trevor from "./pages/Trevor";
 import Iram from "./pages/Iram";
 import Nate from "./pages/Nate";
 import Hongjie from "./pages/Hongjie";
+<<<<<<< HEAD
 >>>>>>> Stashed changes
+=======
+>>>>>>> main
 
+export default function App() {
   return (
+<<<<<<< HEAD
 <<<<<<< Updated upstream
     <div className="home-container">
       <h1>Itinera Frontend</h1>
@@ -78,3 +86,24 @@ export default App;
   );
 }
 >>>>>>> Stashed changes
+=======
+    <div>
+      <Router>
+        <Navbar />
+        <Routes>
+          <Route path="/" element={<Home />} />
+          <Route path="/signup" element={<SignUp />} />
+          <Route path="/login" element={<Login />} />
+          <Route path="/explore" element={<Explore />} />
+          <Route path="/create" element={<CreateItinerary />} />
+          <Route path="/onboarding" element={<Onboarding />} />
+          <Route path="/trevor" element={<Trevor />} />
+          <Route path="/iram" element={<Iram />} />
+          <Route path="/nate" element={<Nate />} />
+          <Route path="/hongjie" element={<Hongjie />} />
+        </Routes>
+      </Router>
+    </div>
+  );
+}
+>>>>>>> main

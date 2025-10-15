@@ -1,70 +1,75 @@
 import React, { useEffect, useRef } from "react";
-import "../styles/mapview.css";
 
 interface MapViewProps {
-  coords: { lat: number; lng: number; name: string }[];
-  apiKey: string;
+  coords: { lat: number; lng: number }[];
 }
 
-const MapView: React.FC<MapViewProps> = ({ coords, apiKey }) => {
+const MapView: React.FC<MapViewProps> = ({ coords }) => {
   const mapRef = useRef<HTMLDivElement>(null);
+  const mapInstance = useRef<InstanceType<typeof window.google.maps.Map> | null>(null);
+  const routePath = useRef<InstanceType<typeof window.google.maps.Polyline> | null>(null);
+  const markers = useRef<InstanceType<typeof window.google.maps.Marker>[]>([]);
 
+  // Initialize the map
   useEffect(() => {
-    console.log("API Key:", apiKey);
+    if (!mapRef.current) return;
 
-    const initMap = () => {
-      if (!mapRef.current || coords.length === 0) return;
+    const g = window.google;
+    if (!g || !g.maps) return;
 
-      const map = new window.google.maps.Map(mapRef.current, {
-        center: coords[0],
-        zoom: 10,
+    const map = new g.maps.Map(mapRef.current, {
+      center: { lat: 39.8283, lng: -98.5795 }, // center of US
+      zoom: 4,
+    });
+    mapInstance.current = map;
+  }, []);
+
+  // Update markers & polyline
+  useEffect(() => {
+    const g = window.google;
+    if (!g || !g.maps || !mapInstance.current) return;
+
+    const map = mapInstance.current;
+
+    // Clear previous overlays
+    routePath.current?.setMap(null);
+    markers.current.forEach((m) => m.setMap(null));
+    markers.current = [];
+
+    // Add new markers
+    coords.forEach((c, i) => {
+      const marker = new g.maps.Marker({
+        position: c,
+        map,
+        label: String.fromCharCode(65 + i),
       });
+      markers.current.push(marker);
+    });
 
-      const bounds = new window.google.maps.LatLngBounds();
-
-      coords.forEach((point) => {
-        new window.google.maps.Marker({
-          position: point,
-          map,
-          title: point.name,
-        });
-        bounds.extend(point);
+    // Draw route line
+    if (coords.length > 1) {
+      const polyline = new g.maps.Polyline({
+        path: coords,
+        geodesic: true,
+        strokeColor: "#4285F4",
+        strokeOpacity: 0.8,
+        strokeWeight: 4,
       });
-
-      if (coords.length > 1) {
-        new window.google.maps.Polyline({
-          path: coords,
-          geodesic: true,
-          strokeColor: "#4285F4",
-          strokeOpacity: 1.0,
-          strokeWeight: 3,
-          map,
-        });
-      }
-
-      map.fitBounds(bounds);
-    };
-
-    // ✅ Only load the script once
-    if (!window.google || !window.google.maps) {
-      const existingScript = document.querySelector(
-        `script[src*="maps.googleapis.com/maps/api/js"]`
-      );
-      if (!existingScript) {
-        const script = document.createElement("script");
-        script.src = `https://maps.googleapis.com/maps/api/js?key=${apiKey}&libraries=places`;
-        script.async = true;
-        script.onload = initMap;
-        document.body.appendChild(script);
-      } else {
-        existingScript.addEventListener("load", initMap);
-      }
-    } else {
-      initMap();
+      polyline.setMap(map);
+      routePath.current = polyline;
     }
-  }, [coords, apiKey]);
 
-  return <div ref={mapRef} className="map-container" />;
+    const bounds = new g.maps.LatLngBounds();
+    coords.forEach((c) => bounds.extend(c));
+    if (!bounds.isEmpty()) map.fitBounds(bounds);
+  }, [coords]);
+
+  return (
+    <div
+      ref={mapRef}
+      className="w-full h-full rounded-lg shadow-md border border-gray-200"
+    />
+  );
 };
 
 export default MapView;
