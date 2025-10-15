@@ -1,4 +1,4 @@
-import ItineraLogo from "../assets/Itinera.png";
+import ItineraLogo from "../assets/ItineraLogo.png";
 import { Link } from "react-router-dom";
 import { useEffect, useState } from "react";
 import { supabase } from "../supabaseClient";
@@ -64,13 +64,13 @@ export default function Navbar() {
           {session ? (
             <button
               onClick={async () => await supabase.auth.signOut()}
-              className="bg-white text-black px-5 py-2 rounded-full hover:bg-gray-300"
+              className="bg-[#81b4fa] text-white px-3 py-2 rounded-lg hover:bg-gray-300"
             >
               Logout
             </button>
           ) : (
             <Link to="/signup">
-              <button className="bg-[#81b4fa] text-white px-5 py-2 rounded-full hover:bg-gray-300">
+              <button className="bg-[#81b4fa] text-white px-3 py-2 rounded-lg hover:bg-gray-300">
                 Sign Up
               </button>
             </Link>
