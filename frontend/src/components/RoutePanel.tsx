@@ -1,279 +1,249 @@
-// src/components/RoutePanel.tsx
-import React, { useState, useRef, useEffect} from "react";
+import React, { useState, useRef, useEffect } from "react";
 import axios from "axios";
-import "../styles/routepanel.css";
+import { type RoutesByMode } from "../pages/Iram";
 
-const TimeDisplay: React.FC<{ timezoneId: string }> = ({ timezoneId }) => {
-    const [currentTime, setCurrentTime] = useState('');
-
-    useEffect(() => {
-        if (timezoneId && timezoneId !== 'Unknown') {
-            const updateTime = () => {
-              try {
-                setCurrentTime(
-                    new Date().toLocaleTimeString('en-US', {
-                        timeZone: timezoneId,
-                        hour: '2-digit',
-                        minute: '2-digit',
-                    })
-                );
-              } catch (e) {
-                setCurrentTime('Time format error');
-              }
-            };
-
-            updateTime(); // Initial time set
-            const timerId = setInterval(updateTime, 1000);
-
-            return () => clearInterval(timerId);
-        } else {
-            setCurrentTime('Timezone Unknown');
-        }
-    }, [timezoneId]);
-
-    return <span>{currentTime}</span>;
+export const TimeDisplay: React.FC<{ tz: string }> = ({ tz }) => {
+  const [time, setTime] = useState("");
+  useEffect(() => {
+    if (!tz || tz === "Unknown") return setTime("Unknown");
+    const tick = () =>
+      setTime(
+        new Date().toLocaleTimeString("en-US", {
+          timeZone: tz,
+          hour: "2-digit",
+          minute: "2-digit",
+        })
+      );
+    tick();
+    const id = setInterval(tick, 1000);
+    return () => clearInterval(id);
+  }, [tz]);
+  return <span className="text-gray-600">{time}</span>;
 };
 
-interface Place {
-  displayName?: string;
-  types?: string[];
-  rating?: string | number;
-  budget?: string;
-}
-
 interface RoutePanelProps {
-  origin: string;
-  setOrigin: (value: string) => void;
-  destinations: string[];
-  setDestinations: (value: string[]) => void;
-  setPlaces: (places: Place[]) => void;
-  setRouteLegs: (legs: any[]) => void;
-  budget: string;
-  setBudget: (value: string) => void;
-  setCoords: (coords: { lat: number; lng: number }[]) => void;
-  
+  origin: string;
+  setOrigin: (v: string) => void;
+  destinations: string[];
+  setDestinations: (v: string[]) => void;
+  setPlaces: (p: any[]) => void;
+  setRouteLegs: (l: any[]) => void;
+  budget: string;
+  setBudget: (v: string) => void;
+  setCoords: (c: { lat: number; lng: number }[]) => void;
   originTimezone: string;
-  destinationTimezone: string;
-  setOriginTimezone: (timezone: string) => void;
-  setDestinationTimezone: (timezone: string) => void;
+  setOriginTimezone: (tz: string) => void;
+  destinationTimezones: string[];
+  setDestinationTimezones: (tz: string[]) => void;
+  setRoutesByMode: (r: RoutesByMode) => void;
 }
 
 const RoutePanel: React.FC<RoutePanelProps> = ({
-  origin,
-  setOrigin,
-  destinations,
-  setDestinations,
-  setPlaces,
-  setRouteLegs,
-  budget,
-  setBudget,
-  setCoords,
+  origin,
+  setOrigin,
+  destinations,
+  setDestinations,
+  setPlaces,
+  setRouteLegs,
+  budget,
+  setBudget,
+  setCoords,
   originTimezone,
-  destinationTimezone,
   setOriginTimezone,
-  setDestinationTimezone,
+  destinationTimezones,
+  setDestinationTimezones,
+  setRoutesByMode,
 }) => {
-  const [newDestination, setNewDestination] = useState("");
-  const [loading, setLoading] = useState(false); // Added loading state
+  const [newDest, setNewDest] = useState("");
+  const [loading, setLoading] = useState(false);
+  const inputRef = useRef<HTMLInputElement>(null);
+  const focusOrigin = () => inputRef.current?.focus();
 
-  const originInputRef = useRef<HTMLInputElement>(null);
-    const focusOrigin = () => {
-      originInputRef.current?.focus();
+  const addDestination = () => {
+    if (!origin.trim()) return alert("Please enter an origin first."), focusOrigin();
+    if (newDest.trim()) {
+      setDestinations([...destinations, newDest.trim()]);
+      setNewDest("");
     }
-  const addDestination = () => {
-    if (origin.trim() ==="") {
-      alert("Please enter an origin. ");
-      focusOrigin();
-      return;
-    }
-    if (newDestination.trim() !== "") {
-      setDestinations([...destinations, newDestination.trim()]);
-      setNewDestination("");
-    }
-  };
+  };
 
-  
-  const handlePlanTrip = async () => {
-    const trimmedOrigin = origin.trim();
+  const fetchData = async (url: string, params = {}) =>
+    (await axios.get(url, { params })).data;
 
-    // 1. Validation: Origin and Destination checks
-    if (!trimmedOrigin) {
-        alert("Please enter an Origin (starting point).");
-        focusOrigin();
-        return;
-    }
-    if (destinations.length === 0) {
-        return alert("Please add at least one Destination.");
-    }
-
+  const handlePlanTrip = async () => {
+    if (!origin.trim()) return alert("Enter an origin"), focusOrigin();
+    if (!destinations.length) return alert("Add at least one destination");
     setLoading(true);
+    setRoutesByMode({});
 
     try {
-        const waypoints = destinations.slice(0, -1).join("|");
-        const finalDest = destinations[destinations.length - 1];
+      const all = [origin, ...destinations];
+      const coords = (
+        await Promise.all(
+          all.map(async (a) => {
+            const res = await fetchData("http://127.0.0.1:8000/geocode", { address: a });
+            return res.results?.[0]?.geometry?.location || null;
+          })
+        )
+      ).filter(Boolean);
 
-        // 2. Geocode all points
-        let resolvedCoords: { lat: number; lng: number }[] = [];
-        try {
-            const allPoints = [trimmedOrigin, ...destinations];
-            const coordsPromises = allPoints.map(async (addr) => {
-                const geoRes = await axios.get("http://127.0.0.1:8000/geocode", {
-                    params: { address: addr },
-                });
-                const loc = geoRes.data.results?.[0]?.geometry?.location;
-                return loc ? { lat: loc.lat, lng: loc.lng } : null;
-            });
-            resolvedCoords = (await Promise.all(coordsPromises)).filter(Boolean) as { lat: number; lng: number }[];
-            setCoords(resolvedCoords);
-        } catch (err) {
-            console.error("DEBUG: Geocoding failed.", err);
-            throw new Error("Geocoding failed. Check backend /geocode endpoint.");
-        }
-
-        if (resolvedCoords.length < 2) {
-            throw new Error("Could not resolve coordinates for both Origin and Final Destination.");
-        }
-        
-        const originCoord = resolvedCoords[0]; 
-        const finalCoord = resolvedCoords[resolvedCoords.length - 1]; 
-        const { lat, lng } = finalCoord; 
-        
-        // 3. Get route data
-        try {
-            const res = await axios.get("http://127.0.0.1:8000/multi_route", {
-                params: { origins: trimmedOrigin, waypoints, destination: finalDest },
-            });
-            const routeData = res.data.routes || [];
-            setRouteLegs(routeData);
-        } catch (err) {
-            console.error("DEBUG: Routing failed.", err);
-            throw new Error("Routing failed. Check backend /multi_route endpoint.");
-        }
-
-        // 4. Get nearby places
-        let filteredPlaces: Place[] = [];
-        try {
-            const placesRes = await axios.get("http://127.0.0.1:8000/places", {
-                params: { lat, lng, radius: 2000, budget },
-            });
-
-            filteredPlaces = (placesRes.data.places || []).map((p: any) => ({
-                displayName: p.displayName?.text || "Unknown",
-                types: p.types,
-                rating: p.rating || 0,
-                budget,
-            }));
-            setPlaces(filteredPlaces);
-        } catch (err) {
-            console.error("DEBUG: Places failed.", err);
-            throw new Error("Places API failed. Check backend /places endpoint.");
-        }
-
-
-        // 5. Fetch Timezones (Resilient Block)
-        let destinationTimezoneId = 'Unknown';
-        try {
-            // Origin Timezone
-            const originTimezoneRes = await axios.get("http://127.0.0.1:8000/timezone", {
-                params: { lat: originCoord.lat, lng: originCoord.lng },
-            });
-            const originTimezoneId = originTimezoneRes.data.timeZoneId || 'Unknown';
-            setOriginTimezone(originTimezoneId);
-
-            // Destination Timezone
-            const destinationTimezoneRes = await axios.get("http://127.0.0.1:8000/timezone", {
-                params: { lat: finalCoord.lat, lng: finalCoord.lng },
-            });
-            destinationTimezoneId = destinationTimezoneRes.data.timeZoneId || 'Unknown';
-            setDestinationTimezone(destinationTimezoneId);
-            
-        } catch (error) {
-            console.warn("WARN: Timezone API call failed. Time display will be 'Unknown'.", error);
-            setOriginTimezone('Unknown');
-            setDestinationTimezone('Unknown');
-          }
-
-    
-
-    } catch (err) {
-        // This catch block will now show a more descriptive message.
-        console.error("FATAL ERROR PLANNING TRIP:", err);
-        const errorMessage = (err as Error).message || "An unknown error occurred.";
-        alert(`Error planning trip: ${errorMessage}`);
-    } finally {
-        setLoading(false);
-    }
-};
-  return (
-    <div className="route-panel">
-      <strong>Itinera Planner</strong>
+      setCoords(coords);
+      const [orig, ...destCoords] = coords;
       
-      <div className="form-group">
-        <br></br>
-        <h4> Origin: </h4>
+      const modesToFetch = ['DRIVE', 'TRANSIT', 'BICYCLE', 'WALK'];
+      const routesData: RoutesByMode = {};
+
+      for (const mode of modesToFetch) {
+        try {
+          
+          const routeResult = await fetchData("http://127.0.0.1:8000/multi_route", {
+            origins: origin,
+            waypoints: destinations.slice(0, -1).join("|"),
+            destination: destinations[destinations.length - 1],
+            travelMode: mode,
+          });
+
+          if (routeResult.routes && routeResult.routes.length > 0) {
+            routesData[mode] = routeResult.routes[0];
+          }
+        } catch (error) {
+          
+          console.warn(`Could not fetch route for mode ${mode}: `, error);
+        }
+      }
+
+      setRoutesByMode(routesData);
+
+      const primaryRoute = routesData['DRIVE'] ? [routesData['DRIVE']] : [];
+      setRouteLegs(primaryRoute);
+
+      // Nearby attractions for last destination
+      const lastDest = destCoords[destCoords.length - 1];
+
+      // Check if lastDest exists before trying to use it
+      if (lastDest) {
+        const placesRes = await fetchData("http://127.0.0.1:8000/places", {
+          lat: lastDest.lat,
+          lng: lastDest.lng,
+          radius: 2000,
+          budget,
+        });
+        setPlaces(
+          (placesRes.places || []).map((p: any) => ({
+            displayName: p.displayName?.text || "Unknown",
+            rating: p.rating || 0,
+            budget,
+          }))
+        );
+      } else {
+        setPlaces([]); 
+      }
+
+      const allTz = await Promise.all(
+        coords.map(async (c) => {
+          const res = await fetchData("http://127.0.0.1:8000/timezone", {
+            lat: c.lat,
+            lng: c.lng,
+          });
+          return res.timeZoneId || "Unknown";
+        })
+      );
+
+      setOriginTimezone(allTz[0]);
+      setDestinationTimezones(allTz.slice(1));
+    } catch (e: any) {
+      alert(`Error: ${e.message}`);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  return (
+    <div className="bg-white shadow-xl rounded-2xl p-6 w-full max-w-md mx-auto border border-gray-100">
+      <h2 className="text-2xl font-bold text-blue-400 mb-5">Itinera Planner</h2>
+
+      {/* Origin */}
+      <div className="mb-4">
+        <label className="block text-gray-700 font-medium">Origin</label>
         <input
-            id="origin-input"
-            ref={originInputRef}
-            value={origin}
-            onChange={(e) => setOrigin(e.target.value)}
-            placeholder="Enter starting point"
-          />
-          {originTimezone && originTimezone !== 'Unknown' && (<small>Local Time: <TimeDisplay timezoneId={originTimezone} /></small>
+          ref={inputRef}
+          value={origin}
+          onChange={(e) => setOrigin(e.target.value)}
+          placeholder="Enter starting point"
+          className="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-200 outline-none"
+        />
+        {originTimezone !== "Unknown" && (
+          <p className="text-sm text-gray-500 mt-1">
+            Local Time: <TimeDisplay tz={originTimezone} />
+          </p>
         )}
-       </div>
-      <br></br>
-      <div className="form-group">
-        <label htmlFor="destination-input">Add Destination:</label>
-        <div className="add-destination">
-          <input
-            id="destination-input"
-            value={newDestination}
-            onChange={(e) => setNewDestination(e.target.value)}
-            placeholder="Enter destination"
-          />
-          <button onClick={addDestination} disabled={loading}>Add</button>
-        </div>
-        <br></br>
       </div>
 
-      {destinations.length > 0 && (
-        <div className="destinations-list">
-          <h4>Destinations:</h4>
-          {destinations.map((d: string, i: number) => (
-            <p key={i}>
-              {d}
-              {i === destinations.length - 1 && destinationTimezone && 
-              destinationTimezone !== 'Unknown' && (<small> (Local Time: 
-                <TimeDisplay timezoneId={destinationTimezone} />)</small>
+      {/* Destinations */}
+      <div className="mb-4">
+        <label className="block text-gray-700 font-medium">Add Destination</label>
+        <div className="flex gap-2">
+          <input
+            value={newDest}
+            onChange={(e) => setNewDest(e.target.value)}
+            placeholder="Enter destination"
+            className="flex-1 px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-200"
+          />
+          <button
+            onClick={addDestination}
+            disabled={loading}
+            className="px-4 py-2 bg-blue-400 text-white rounded-lg hover:bg-blue-300 disabled:bg-gray-400"
+          >
+            Add
+          </button>
+        </div>
+      </div>
+
+      {!!destinations.length && (
+        <div className="mb-4">
+          <h4 className="font-semibold text-gray-700">Destinations:</h4>
+          {destinations.map((d, i) => (
+            <p key={i} className="text-gray-600">
+              {d}{" "}
+              {destinationTimezones[i] && destinationTimezones[i] !== "Unknown" && (
+                <small className="ml-2 text-gray-500">
+                  (Local: <TimeDisplay tz={destinationTimezones[i]} />)
+                </small>
               )}
             </p>
-        ))}
-        </div>
-      )}
+          ))}
+        </div>
+      )}
 
-      <div className="form-group">
-        <label htmlFor="budget-select">Budget Preference:</label>
-        <select
-          id="budget-select"
-          value={budget}
-          onChange={(e) => setBudget(e.target.value)}
-          disabled={loading} // Disable during loading
-        >
-          <option value="low">Low</option>
-          <option value="medium">Medium</option>
-          <option value="high">High</option>
-        </select>
+      {/* Budget */}
+      <div className="mb-5">
+        <label className="block text-gray-700 font-medium">Budget Preference</label>
+        <select
+          value={budget}
+          onChange={(e) => setBudget(e.target.value)}
+          disabled={loading}
+          className="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-200"
+        >
+          <option value="low">Low</option>
+          <option value="medium">Medium</option>
+          <option value="high">High</option>
+        </select>
       </div>
 
-      <button 
-            className="plan-btn" 
-            onClick={handlePlanTrip}
-            disabled={loading || !origin || destinations.length === 0} // Disable button while loading
-        >
-        {loading ? 'Planning...' : 'Plan Trip'}
-      </button>
-    </div>
-  );
+      {/* Plan Trip Button */}
+      <button
+        onClick={handlePlanTrip}
+        disabled={loading || !origin || !destinations.length}
+        className={`w-full py-2 font-semibold text-white rounded-lg transition ${
+          loading || !origin || !destinations.length
+            ? "bg-gray-400 cursor-not-allowed"
+            : "bg-green-600 hover:bg-green-700"
+        }`}
+      >
+        {loading ? "Planning..." : "Plan Trip"}
+      </button>
+    </div>
+  );
 };
 
 export default RoutePanel;

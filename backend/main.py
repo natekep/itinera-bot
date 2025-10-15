@@ -152,23 +152,43 @@ def timezone(lat: float, lng: float):
 
 # Optional multi-stop route 
 @app.get("/multi_route")
-def multi_route(origins: str, waypoints: str, destination: str):
-    """
-    Compute route with multiple stops.
-    Example: /multi_route?origins=New+York&waypoints=Philadelphia|Baltimore&destination=Washington+DC
-    """
+def multi_route(origins: str, waypoints: str, destination: str, 
+                travelMode: str = Query("DRIVE", enum=["DRIVE", "TRANSIT", "BICYCLE", "WALK"])):
+   
     url = "https://routes.googleapis.com/directions/v2:computeRoutes"
     headers = {
         "Content-Type": "application/json",
-        "X-Goog-Api-Key": GOOGLE_API_KEY
+        "X-Goog-Api-Key": GOOGLE_API_KEY,
+        "X-Goog-FieldMask": "routes.duration,routes.distanceMeters,routes.legs.duration,routes.legs.distanceMeters"
     }
-    waypoint_list = [{"address": w} for w in waypoints.split("|")]
+    
+    waypoint_list = []
+    if waypoints:
+        waypoint_list = [{"address": w} for w in waypoints.split("|")]
+
     body = {
         "origin": {"address": origins},
         "destination": {"address": destination},
-        "intermediates": waypoint_list,
-        "travelMode": "DRIVE",
-        "optimizeWaypointOrder": True
+        "travelMode": travelMode
     }
-    res = requests.post(url, headers=headers, json=body)
-    return res.json()
+    
+    if waypoint_list:
+        body["intermediates"] = waypoint_list
+        
+    if travelMode == "DRIVE" and waypoint_list:
+        body["optimizeWaypointOrder"] = True
+    
+    if travelMode == "TRANSIT":
+        body.pop("intermediates", None)
+        body["departureTime"] = time.strftime('%Y-%m-%dT%H:%M:%SZ', time.gmtime())
+
+    try:
+        res = requests.post(url, headers=headers, json=body)
+        res.raise_for_status()  
+        return res.json()
+    except requests.exceptions.HTTPError as err:
+        print(f"HTTP Error from Google API for mode {travelMode}: {err.response.text}")
+        raise HTTPException(status_code=err.response.status_code, detail=err.response.json())
+    except Exception as e:
+        print(f"An unexpected error occurred: {e}")
+        raise HTTPException(status_code=500, detail="An internal server error occurred.")

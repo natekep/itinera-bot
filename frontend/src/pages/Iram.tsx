@@ -1,12 +1,11 @@
-// src/pages/Maps.tsx
 import React, { useState } from "react";
 import MapView from "../components/MapView";
 import PlaceSidebar from "../components/PlaceSidebar";
 import RoutePanel from "../components/RoutePanel";
-import "../styles/mapview.css";
-import "../styles/sidebar.css";
-import "../styles/maps.css";
-import "../styles/routepanel.css";
+
+export interface RoutesByMode{
+  [key: string]: any; 
+}
 
 const Iram: React.FC = () => {
   const [origin, setOrigin] = useState("");
@@ -15,41 +14,49 @@ const Iram: React.FC = () => {
   const [routes, setRoutes] = useState<any[]>([]);
   const [places, setPlaces] = useState<any[]>([]);
   const [budget, setBudget] = useState("medium");
-  const [originTimezone, setOriginTimezone] = useState<string>('');
-  const [destinationTimezone, setDestinationTimezone] = useState<string>('');
+  const [originTimezone, setOriginTimezone] = useState<string>("");
+  const [destinationTimezones, setDestinationTimezones] = useState<string[]>([]);
+  const [routesByMode, setRoutesByMode] = useState<RoutesByMode>({});
 
   return (
-    <div className="maps-container">
-      {/* Left panel: route form and sidebar */}
-      <div className="maps-left">
-        <RoutePanel
-          origin={origin}
-          setOrigin={setOrigin}
-          destinations={destinations}
-          setDestinations={setDestinations}
-          setPlaces={setPlaces}
-          setRouteLegs={setRoutes}
-          setCoords={setCoords} /* 🔹 pass setCoords here */
-          budget={budget}
-          setBudget={setBudget}
-          originTimezone={originTimezone}
-          destinationTimezone={destinationTimezone}
-          setOriginTimezone={setOriginTimezone}
-          setDestinationTimezone={setDestinationTimezone}
-        />
+    <div className="flex h-screen w-full">
+      {/* LEFT SIDE: Route panel + Sidebar */}
+      <div className="flex flex-col w-[28%] bg-gray-50 border-r border-gray-300 overflow-hidden">
+        {/* Route panel on top */}
+        <div className="flex-grow overflow-y-auto p-4 border-b border-gray-300">
+          <RoutePanel
+            origin={origin}
+            setOrigin={setOrigin}
+            destinations={destinations}
+            setDestinations={setDestinations}
+            setPlaces={setPlaces}
+            setRouteLegs={setRoutes}
+            setCoords={setCoords}
+            budget={budget}
+            setBudget={setBudget}
+            originTimezone={originTimezone}
+            setOriginTimezone={setOriginTimezone}
+            destinationTimezones={destinationTimezones}
+            setDestinationTimezones={setDestinationTimezones}
+            setRoutesByMode={setRoutesByMode}
+          />
+        </div>
 
-        <PlaceSidebar
-          origin={origin}
-          destinations={
-            destinations[destinations.length - 1] || ""
-          } /* 🔹 pass last destination */
-          routes={routes}
-          places={places}
-        />
+        {/* Sidebar on bottom */}
+        <div className="h-[35%] overflow-y-auto p-3 bg-white">
+          <PlaceSidebar
+            origin={origin}
+            destinations={destinations}
+            routes={routes}
+            places={places}
+            destinationTimezones={destinationTimezones}
+            routesByMode={routesByMode}
+          />
+        </div>
       </div>
 
-      {/* Right panel: map */}
-      <div className="maps-right">
+      {/* RIGHT SIDE: Map */}
+      <div className="flex-1">
         <MapView coords={coords} />
       </div>
     </div>

@@ -1,5 +1,4 @@
 import React, { useEffect, useRef } from "react";
-import "../styles/mapview.css";
 
 interface MapViewProps {
   coords: { lat: number; lng: number }[];
@@ -7,52 +6,47 @@ interface MapViewProps {
 
 const MapView: React.FC<MapViewProps> = ({ coords }) => {
   const mapRef = useRef<HTMLDivElement>(null);
-  const mapInstance = useRef<InstanceType<
-    typeof window.google.maps.Map
-  > | null>(null);
-  const routePath = useRef<InstanceType<
-    typeof window.google.maps.Polyline
-  > | null>(null);
+  const mapInstance = useRef<InstanceType<typeof window.google.maps.Map> | null>(null);
+  const routePath = useRef<InstanceType<typeof window.google.maps.Polyline> | null>(null);
   const markers = useRef<InstanceType<typeof window.google.maps.Marker>[]>([]);
 
+  // Initialize the map
   useEffect(() => {
     if (!mapRef.current) return;
 
     const g = window.google;
     if (!g || !g.maps) return;
-    const USA_CENTER = { lat: 39.8283, lng: -98.5795 }; // Geographic center of the US
-    const USA_ZOOM = 4; 
 
-    const map = new g.maps.Map(mapRef.current!, {
-      center: USA_CENTER,
-      zoom: USA_ZOOM,
+    const map = new g.maps.Map(mapRef.current, {
+      center: { lat: 39.8283, lng: -98.5795 }, // center of US
+      zoom: 4,
     });
     mapInstance.current = map;
   }, []);
 
-  // To draw markers and routes
+  // Update markers & polyline
   useEffect(() => {
     const g = window.google;
     if (!g || !g.maps || !mapInstance.current) return;
 
     const map = mapInstance.current;
 
-    // Clear previous route and markers
+    // Clear previous overlays
     routePath.current?.setMap(null);
     markers.current.forEach((m) => m.setMap(null));
     markers.current = [];
 
-    // Add markers
+    // Add new markers
     coords.forEach((c, i) => {
       const marker = new g.maps.Marker({
         position: c,
         map,
-        label: String.fromCharCode(65 + i), // A, B, C...
+        label: String.fromCharCode(65 + i),
       });
       markers.current.push(marker);
     });
 
-    // Draw polyline if more than 1 point
+    // Draw route line
     if (coords.length > 1) {
       const polyline = new g.maps.Polyline({
         path: coords,
@@ -65,16 +59,17 @@ const MapView: React.FC<MapViewProps> = ({ coords }) => {
       routePath.current = polyline;
     }
 
-    // Fit map to bounds
     const bounds = new g.maps.LatLngBounds();
     coords.forEach((c) => bounds.extend(c));
-    // Only call fitBounds if there are actual coordinates
-    if (!bounds.isEmpty()) { 
-        map.fitBounds(bounds);
-    }
+    if (!bounds.isEmpty()) map.fitBounds(bounds);
   }, [coords]);
 
-  return <div ref={mapRef} className="map-container" />;
+  return (
+    <div
+      ref={mapRef}
+      className="w-full h-full rounded-lg shadow-md border border-gray-200"
+    />
+  );
 };
 
 export default MapView;
