@@ -11,7 +11,7 @@ export default function Login() {
   async function handleLogin(e: FormEvent<HTMLFormElement>) {
     e.preventDefault(); // prevents page reload when form is submitted
 
-    const { data, error } = await supabase.auth.signInWithPassword({
+    const { error } = await supabase.auth.signInWithPassword({
       email: email,
       password: password,
     });

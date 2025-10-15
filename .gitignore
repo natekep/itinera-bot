@@ -65,3 +65,5 @@ frontend/.env.local
 .vscode/
 .idea/
 *.swp
+frontend/.env.development
+.gitignore

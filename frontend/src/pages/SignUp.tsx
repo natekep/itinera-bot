@@ -14,7 +14,7 @@ export default function SignUp() {
     e.preventDefault(); // prevents page reload when form is submitted
 
     // supabase sign up call
-    const { data, error } = await supabase.auth.signUp({
+    const { error } = await supabase.auth.signUp({
       email,
       password,
       options: {

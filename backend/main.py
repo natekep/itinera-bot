@@ -6,7 +6,7 @@ from fastapi import FastAPI, Query, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
 from typing import List, Literal
-from openai import OpenAI  # Changed import
+# from openai import OpenAI  # Changed import
 from dotenv import load_dotenv
 
 
@@ -16,7 +16,8 @@ app = FastAPI()
 
 # Services from this origin can access the api
 origins = [
-    "http://localhost:5173"
+    "http://localhost:5173",
+    "https://itinera-bot.web.app"
 ]
 
 app.add_middleware(

@@ -5,7 +5,6 @@ import Home from "./pages/Home";
 import Login from "./pages/Login";
 import Explore from "./pages/Explore";
 import CreateItinerary from "./pages/CreateItinerary";
-import { supabase } from "./supabaseClient";
 import Onboarding from "./pages/Onboarding";
 import Trevor from "./pages/Trevor";
 import Iram from "./pages/Iram";
