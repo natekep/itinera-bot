@@ -3,11 +3,13 @@ info:
   title: Itinera API
   description: API for Itinera - AI-powered conversational travel planner.
   version: 0.1.0
+
 servers:
   - url: https://api.itinera.ai/v1
     description: Production server
   - url: http://localhost:8000/v1
     description: Local development server
+
 tags:
   - name: Users
     description: Endpoints for user management
@@ -19,6 +21,10 @@ tags:
     description: Endpoints for retrieving activities
 
 paths:
+
+  ##########################################
+  # USERS
+  ##########################################
   /users:
     post:
       tags: [Users]
@@ -60,6 +66,37 @@ paths:
           description: User details retrieved
         "404":
           description: User not found
+    put:
+      tags: [Users]
+      summary: Update user details
+      parameters:
+        - name: userId
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        description: Updated user info
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                name: 
+                  type: string
+                email:
+                  type: string
+                  format: email
+                password:
+                  type: string
+      responses:
+        "200":
+          description: User updated successfully
+        "400":
+          description: Invalid input
+        "404":
+          description: User not found
     delete:
       tags: [Users]
       summary: Delete a user
@@ -75,13 +112,38 @@ paths:
         "404":
           description: User not found
 
+  /user/me:
+    get:
+      tags: [Users]
+      summary: Get current user's info
+      security: 
+        - OAuth2: [openid, email, profile]
+      responses:
+        "200":
+          description: Current user details
+          content:
+            application/json:
+              schema:
+                type: object
+                properties: 
+                  id:
+                    type: string
+                    example: "123"
+                  name:
+                    type: string
+                    example: "Iram Example"
+                  email:
+                    type: string
+                    example: "iram@example.com"
+
+  ##########################################
+  # CHAT
+  ##########################################
   /chat:
     post:
       tags: [Chat]
       summary: Create a chat completion
-      description: >
-        Send a turn of conversation and receive the assistant's reply. Uses OpenAI-style
-        request/response shape (messages[], choices[], usage). No streaming.
+      description: Send a message to the AI chatbot and receive a response.
       requestBody:
         required: true
         content:
@@ -92,7 +154,7 @@ paths:
               properties:
                 userId:
                   type: string
-                  description: Optional application user id
+                  description: Optional user identifier
                 messages:
                   type: array
                   description: OpenAI-style chat messages history
@@ -110,7 +172,7 @@ paths:
                         description: Tool name when role=tool
                 context:
                   type: object
-                  description: Optional app-specific context (metadata you pass to your backend)
+                  description: Optional app-specific metadata
                 temperature:
                   type: number
                   minimum: 0
@@ -140,44 +202,28 @@ paths:
                         finish_reason:
                           type: string
                           enum: [stop, length, content_filter, tool_calls]
-                          example: stop
                         message:
                           type: object
                           properties:
                             role:
                               type: string
                               enum: [assistant]
-                              example: assistant
                             content:
                               type: string
-                              example: "Here’s a 2-day plan for Vegas..."
+                              example: "Here’s a 2-day itinerary for Vegas..."
                   usage:
                     type: object
                     properties:
-                      prompt_tokens: { type: integer, example: 120 }
-                      completion_tokens: { type: integer, example: 80 }
-                      total_tokens: { type: integer, example: 200 }
+                      prompt_tokens: { type: integer }
+                      completion_tokens: { type: integer }
+                      total_tokens: { type: integer }
         "400":
           description: Invalid input
-          content:
-            application/json:
-              schema:
-                type: object
-                properties:
-                  error:
-                    type: object
-                    required: [message, type]
-                    properties:
-                      message: { type: string, example: "messages is required" }
-                      type: { type: string, example: "invalid_request_error" }
 
   /chat/{conversationId}:
     put:
       tags: [Chat]
       summary: Update/replace a conversation state (messages or system context)
-      description: >
-        Replace or amend a conversation’s stored state so the next POST /chat turn can continue
-        from this updated history.
       parameters:
         - name: conversationId
           in: path
@@ -192,7 +238,6 @@ paths:
               properties:
                 messages:
                   type: array
-                  description: Full replacement or appended set of messages to persist
                   items:
                     type: object
                     required: [role, content]
@@ -202,32 +247,15 @@ paths:
                       name: { type: string }
                 context:
                   type: object
-                  description: Optional metadata to persist with the conversation
+                  description: Metadata to persist
       responses:
         "200":
           description: Conversation state saved
-          content:
-            application/json:
-              schema:
-                type: object
-                properties:
-                  conversationId: { type: string }
-                  messages:
-                    type: array
-                    items:
-                      type: object
-                      properties:
-                        role: { type: string }
-                        content: { type: string }
-                        name: { type: string }
-                  context:
-                    type: object
         "400":
           description: Invalid input
     delete:
       tags: [Chat]
       summary: Delete a conversation
-      description: Permanently deletes the stored conversation state for the given id.
       parameters:
         - name: conversationId
           in: path
@@ -239,11 +267,19 @@ paths:
         "404":
           description: Conversation not found
 
-
-  /itineraries:
+  ##########################################
+  # ITINERARIES
+  ##########################################
+  /users/{userId}/itineraries:
     post:
       tags: [Itineraries]
       summary: Generate an itinerary based on user preferences
+      parameters:
+        - name: userId
+          in: path
+          required: true
+          schema:
+            type: string
       requestBody:
         description: User preferences and constraints for itinerary generation
         required: true
@@ -251,10 +287,8 @@ paths:
           application/json:
             schema:
               type: object
-              required: [userId, destination]
+              required: [destination]
               properties:
-                userId:
-                  type: string
                 destination:
                   type: string
                 startDate:
@@ -289,19 +323,22 @@ paths:
         "400":
           description: Invalid input
 
-  /itineraries/{itineraryId}:
+  /users/{userId}/itineraries/{itineraryId}:
     get:
       tags: [Itineraries]
       summary: Retrieve a saved itinerary
       parameters:
+        - name: userId
+          in: path
+          required: true
+          schema: { type: string }
         - name: itineraryId
           in: path
           required: true
-          schema:
-            type: string
+          schema: { type: string }
       responses:
         "200":
-          description: Saved itinerary retrieved successfully
+          description: Saved itinerary retrieved
           content:
             application/json:
               schema:
@@ -312,11 +349,14 @@ paths:
       tags: [Itineraries]
       summary: Update an existing itinerary
       parameters:
+        - name: userId
+          in: path
+          required: true
+          schema: { type: string }
         - name: itineraryId
           in: path
           required: true
-          schema:
-            type: string
+          schema: { type: string }
       requestBody:
         description: Updated itinerary details
         required: true
@@ -326,51 +366,48 @@ paths:
               $ref: "#/components/schemas/Itinerary"
       responses:
         "200":
-          description: Itinerary updated successfully
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/Itinerary"
+          description: Itinerary updated
         "400":
           description: Invalid input
-        "404":
-          description: Itinerary not found
     delete:
       tags: [Itineraries]
       summary: Delete an itinerary
       parameters:
+        - name: userId
+          in: path
+          required: true
+          schema: { type: string }
         - name: itineraryId
           in: path
           required: true
-          schema:
-            type: string
+          schema: { type: string }
       responses:
         "204":
-          description: Itinerary deleted successfully
+          description: Itinerary deleted
         "404":
           description: Itinerary not found
 
-  /itineraries/{itineraryId}/feedback:
+  /users/{userId}/itineraries/{itineraryId}/feedback:
     post:
       tags: [Itineraries]
       summary: Submit feedback on an itinerary
       parameters:
+        - name: userId
+          in: path
+          required: true
+          schema: { type: string }
         - name: itineraryId
           in: path
           required: true
-          schema:
-            type: string
+          schema: { type: string }
       requestBody:
-        description: Feedback details
         required: true
         content:
           application/json:
             schema:
               type: object
-              required: [userId, rating, comment]
+              required: [rating, comment]
               properties:
-                userId:
-                  type: string
                 rating:
                   type: integer
                   minimum: 1
@@ -382,22 +419,23 @@ paths:
           description: Feedback submitted successfully
         "400":
           description: Invalid input
-        "404":
-          description: Itinerary not found
 
-  /itineraries/{itineraryId}/explanation:
+  /users/{userId}/itineraries/{itineraryId}/explanation:
     get:
       tags: [Itineraries]
       summary: Retrieve an explanation of why an itinerary was generated
       parameters:
+        - name: userId
+          in: path
+          required: true
+          schema: { type: string }
         - name: itineraryId
           in: path
           required: true
-          schema:
-            type: string
+          schema: { type: string }
       responses:
         "200":
-          description: Explanation retrieved successfully
+          description: Explanation retrieved
           content:
             application/json:
               schema:
@@ -407,25 +445,23 @@ paths:
                     type: string
                   explanation:
                     type: string
-        "404":
-          description: Itinerary not found
 
-  /activities:
+  ##########################################
+  # ACTIVITIES
+  ##########################################
+  /users/{userId}/itineraries/{itineraryId}/activities:
     get:
       tags: [Activities]
-      summary: Retrieve available activities for a destination
+      summary: Retrieve all activities for a given itinerary
       parameters:
-        - name: destination
-          in: query
+        - name: userId
+          in: path
           required: true
-          schema:
-            type: string
-        - name: date
-          in: query
-          required: false
-          schema:
-            type: string
-            format: date
+          schema: { type: string }
+        - name: itineraryId
+          in: path
+          required: true
+          schema: { type: string }
       responses:
         "200":
           description: List of activities
@@ -435,64 +471,47 @@ paths:
                 type: array
                 items:
                   $ref: "#/components/schemas/Activity"
-        "404":
-          description: No activities found
+    post:
+      tags: [Activities]
+      summary: Add a new activity to the itinerary
+      parameters:
+        - name: userId
+          in: path
+          required: true
+          schema: { type: string }
+        - name: itineraryId
+          in: path
+          required: true
+          schema: { type: string }
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/Activity"
+      responses:
+        "201":
+          description: Activity added successfully
 
-components:
-  schemas:
-    Activity:
-      type: object
-      properties:
-        id:
-          type: string
-        name:
-          type: string
-        description:
-          type: string
-        location:
-          type: string
-        category:
-          type: string
-        price:
-          type: number
-          format: float
-        duration:
-          type: string
-          description: e.g., "2h"
-        recommendedTime:
-          type: string
-          description: e.g., "Morning"
-        weatherSuitability:
-          type: array
-          items:
-            type: string
-    Itinerary:
-      type: object
-      properties:
-        userId:
-          type: string
-        destination:
-          type: string
-        startDate:
-          type: string
-          format: date
-        endDate:
-          type: string
-          format: date
-        totalBudget:
-          type: number
-          format: float
-        dailyPlans:
-          type: array
-          items:
-            type: object
-            properties:
-              date:
-                type: string
-                format: date
-              activities:
-                type: array
-                items:
-                  $ref: "#/components/schemas/Activity"
-              explanation:
-                type: string
+  /users/{userId}/itineraries/{itineraryId}/activities/{activityId}:
+    get:
+      tags: [Activities]
+      summary: Retrieve details of a specific activity
+      parameters:
+        - name: userId
+          in: path
+          required: true
+          schema: { type: string }
+        - name: itineraryId
+          in: path
+          required: true
+          schema: { type: string }
+        - name: activityId
+          in: path
+          required: true
+          schema: { type: string }
+      responses:
+        "200":
+          description: Activity details
+          content:
+            application/j
