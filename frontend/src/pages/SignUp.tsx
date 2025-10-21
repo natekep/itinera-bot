@@ -14,7 +14,7 @@ export default function SignUp() {
     e.preventDefault(); // prevents page reload when form is submitted
 
     // supabase sign up call
-    const { data, error } = await supabase.auth.signUp({
+    const { error } = await supabase.auth.signUp({
       email,
       password,
       options: {
@@ -69,7 +69,7 @@ export default function SignUp() {
         />
         <button
           type="submit"
-          className="bg-black text-white py-2 rounded-lg hover:bg-gray-800"
+          className="bg-[#81b4fa] text-white p-2 rounded-lg border-2 border-[#81b4fa] hover:bg-white hover:text-[#81b4fa] transition-colors duration-300"
         >
           Get Started!
         </button>
@@ -81,7 +81,7 @@ export default function SignUp() {
           onClick={() => {
             navigate("/login");
           }}
-          className="bg-black text-white py-2 rounded-lg hover:bg-gray-800"
+          className="bg-white border-2 border-[#81b4fa] text-[#81b4fa] p-2 rounded-lg hover:bg-[#81b4fa] hover:text-white transition-colors duration-200"
         >
           Login
         </button>

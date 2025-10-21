@@ -11,7 +11,7 @@ export default function Login() {
   async function handleLogin(e: FormEvent<HTMLFormElement>) {
     e.preventDefault(); // prevents page reload when form is submitted
 
-    const { data, error } = await supabase.auth.signInWithPassword({
+    const { error } = await supabase.auth.signInWithPassword({
       email: email,
       password: password,
     });
@@ -48,7 +48,7 @@ export default function Login() {
         />
         <button
           type="submit"
-          className="bg-black text-white py-2 rounded-lg hover:bg-gray-800"
+          className="bg-[#81b4fa] text-white p-2 rounded-lg border-2 border-[#81b4fa] hover:bg-white hover:text-[#81b4fa] transition-colors duration-300"
         >
           Continue
         </button>
@@ -58,7 +58,7 @@ export default function Login() {
         <button
           type="button"
           onClick={() => navigate("/signup")}
-          className="bg-black text-white py-2 rounded-lg hover:bg-gray-800"
+          className="bg-white border-2 border-[#81b4fa] text-[#81b4fa] p-2 rounded-lg hover:bg-[#81b4fa] hover:text-white transition-colors duration-200"
         >
           Sign Up
         </button>
