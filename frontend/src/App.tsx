@@ -1,4 +1,9 @@
-import { BrowserRouter as Router, Routes, Route } from "react-router-dom";
+import {
+  BrowserRouter as Router,
+  Routes,
+  Route,
+  useLocation,
+} from "react-router-dom";
 import Navbar from "./components/Navbar";
 import SignUp from "./pages/SignUp";
 import Home from "./pages/Home";
@@ -10,25 +15,37 @@ import Trevor from "./pages/Trevor";
 import Iram from "./pages/Iram";
 import Nate from "./pages/Nate";
 import Hongjie from "./pages/Hongjie";
+import UserOnboarding from "./pages/UserOnboarding";
+
+function AppContent() {
+  const location = useLocation();
+  const hideNavbarRoutes = ["/login", "/signup", "/useronboarding", "/404"];
+  const shouldHideNavbar = hideNavbarRoutes.includes(location.pathname);
+
+  return (
+    <>
+      {!shouldHideNavbar && <Navbar />}
+      <Routes>
+        <Route path="/" element={<Home />} />
+        <Route path="/signup" element={<SignUp />} />
+        <Route path="/login" element={<Login />} />
+        <Route path="/explore" element={<Explore />} />
+        <Route path="/create" element={<CreateItinerary />} />
+        <Route path="/onboarding" element={<Onboarding />} />
+        <Route path="/useronboarding" element={<UserOnboarding />} />
+        <Route path="/trevor" element={<Trevor />} />
+        <Route path="/iram" element={<Iram />} />
+        <Route path="/nate" element={<Nate />} />
+        <Route path="/hongjie" element={<Hongjie />} />
+      </Routes>
+    </>
+  );
+}
 
 export default function App() {
   return (
-    <div>
-      <Router>
-        <Navbar />
-        <Routes>
-          <Route path="/" element={<Home />} />
-          <Route path="/signup" element={<SignUp />} />
-          <Route path="/login" element={<Login />} />
-          <Route path="/explore" element={<Explore />} />
-          <Route path="/create" element={<CreateItinerary />} />
-          <Route path="/onboarding" element={<Onboarding />} />
-          <Route path="/trevor" element={<Trevor />} />
-          <Route path="/iram" element={<Iram />} />
-          <Route path="/nate" element={<Nate />} />
-          <Route path="/hongjie" element={<Hongjie />} />
-        </Routes>
-      </Router>
-    </div>
+    <Router>
+      <AppContent />
+    </Router>
   );
 }

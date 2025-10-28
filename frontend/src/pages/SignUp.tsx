@@ -2,6 +2,7 @@ import { useState } from "react";
 import type { FormEvent } from "react";
 import { supabase } from "../supabaseClient";
 import { useNavigate } from "react-router-dom";
+import ItineraLogo from "../assets/ItineraLogo.png";
 
 export default function SignUp() {
   const [fullName, setFullName] = useState("");
@@ -28,64 +29,69 @@ export default function SignUp() {
       alert(error.message);
     } else {
       alert("Sign up is succesful!");
-      navigate("/onboarding");
+      navigate("/useronboarding");
     }
   }
 
   return (
-    <div className="mt-20 bg-white rounded-xl shadow-lg p-8 w-[100%] max-w-md mx-auto">
-      <h1 className="text-xl">Sign Up</h1>
-      <p className="text-gray-500 mt-2">
-        Make an account to save itineraries and activities for your future
-        vacations!
-      </p>
-      <form onSubmit={handleSubmit} className="flex flex-col gap-4 w-full mt-5">
-        <input
-          type="text"
-          placeholder="Full Name"
-          className="border border-gray-300 rounded-lg p-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
-          value={fullName}
-          onChange={(e) => {
-            setFullName(e.target.value);
-          }}
-        />
-        <input
-          type="email"
-          placeholder="Email"
-          className="border border-gray-300 rounded-lg p-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
-          value={email}
-          onChange={(e) => {
-            setEmail(e.target.value);
-          }}
-        />
-        <input
-          type="password"
-          placeholder="Password"
-          className="border border-gray-300 rounded-lg p-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
-          value={password}
-          onChange={(e) => {
-            setPassword(e.target.value);
-          }}
-        />
-        <button
-          type="submit"
-          className="bg-[#81b4fa] text-white p-2 rounded-lg border-2 border-[#81b4fa] hover:bg-white hover:text-[#81b4fa] transition-colors duration-300"
-        >
-          Get Started!
-        </button>
-        <p className="text-gray-500  mx-auto">
-          ------------ already have an account? ------------
+    <div className="flex flex-col items-center min-h-screen mt-20">
+      <img className="w-25" src={ItineraLogo}></img>
+      <div className="bg-white border border-gray-300 rounded-xl shadow-lg p-8 w-[100%] max-w-md">
+        <h1 className="text-3xl text-center font-semibold">Create Account</h1>
+        <p className="text-gray-500 mt-2">
+          Start planning your dream adventures today!
         </p>
-        <button
-          type="button"
-          onClick={() => {
-            navigate("/login");
-          }}
-          className="bg-white border-2 border-[#81b4fa] text-[#81b4fa] p-2 rounded-lg hover:bg-[#81b4fa] hover:text-white transition-colors duration-200"
+        <form
+          onSubmit={handleSubmit}
+          className="flex flex-col gap-4 w-full mt-5"
         >
-          Login
-        </button>
-      </form>
+          <input
+            type="text"
+            placeholder="Full Name"
+            className="border border-gray-300 rounded-lg p-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
+            value={fullName}
+            onChange={(e) => {
+              setFullName(e.target.value);
+            }}
+          />
+          <input
+            type="email"
+            placeholder="Email"
+            className="border border-gray-300 rounded-lg p-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
+            value={email}
+            onChange={(e) => {
+              setEmail(e.target.value);
+            }}
+          />
+          <input
+            type="password"
+            placeholder="Password"
+            className="border border-gray-300 rounded-lg p-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
+            value={password}
+            onChange={(e) => {
+              setPassword(e.target.value);
+            }}
+          />
+          <button
+            type="submit"
+            className="bg-[#81b4fa] text-white p-2 rounded-lg border-2 border-[#81b4fa] hover:bg-white hover:text-[#81b4fa] transition-colors duration-300"
+          >
+            Get Started!
+          </button>
+          <p className="text-gray-500  mx-auto">
+            ------------ already have an account? ------------
+          </p>
+          <button
+            type="button"
+            onClick={() => {
+              navigate("/login");
+            }}
+            className="bg-white border-2 border-[#81b4fa] text-[#81b4fa] p-2 rounded-lg hover:bg-[#81b4fa] hover:text-white transition-colors duration-200"
+          >
+            Login
+          </button>
+        </form>
+      </div>
     </div>
   );
 }
