@@ -1,0 +1,15 @@
+runtime: python310
+
+entrypoint: uvicorn main:app --host=0.0.0.0 --port=$PORT
+
+env_variables:
+  GOOGLE_MAPS_API_KEY: "AIzaSyCLCf-a0Mug12YWgOtJ3kwVbRJWM4nU7Mw"
+
+automatic_scaling:
+  target_cpu_utilization: 0.65
+  min_instances: 1
+  max_instances: 3
+
+handlers:
+  - url: /.*
+    script: auto
