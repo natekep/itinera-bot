@@ -20,7 +20,8 @@ app.include_router(flight.router)
 
 # CORS (Cross-Origin Resource Sharing) prohibits unauthorized websites, endpoints, or servers from accessing the API
 
-# Services from this origin can access the api
+# Services from this origin can access the apiapp:
+
 origins = [
     "http://localhost:5173"
 ]

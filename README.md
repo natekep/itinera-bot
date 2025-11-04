@@ -48,6 +48,8 @@ Install Dependencies
 ```bash
 cd frontend
 npm install
+npm install -D tailwindcss @tailwindcss/vite
+npm install @supabase/supabase-js
 ```
 
 Run Frontend

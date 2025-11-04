@@ -1,0 +1,729 @@
+# Offer request ENDPOINT: GET https://api.duffel.com/air/offer_requests
+# curl -X GET --compressed "https://api.duffel.com/air/offer_requests?after=g2wAAAACbQAAABBBZXJvbWlzdC1LaGFya2l2bQAAAB=&before=g2wAAAACbQAAABBBZXJvbWlzdC1LaGFya2l2bQAAAB=&limit=1" \
+#   -H "Accept-Encoding: gzip" \
+#   -H "Accept: application/json" \
+#   -H "Duffel-Version: v2" \
+#   -H "Authorization: Bearer <YOUR_ACCESS_TOKEN>"
+
+
+# Request offer response
+{
+  "data": {
+    "slices": [
+      {
+        "origin_type": "airport",
+        "origin": {
+          "type": "airport",
+          "time_zone": "Europe/London",
+          "name": "Heathrow",
+          "longitude": -141.951519,
+          "latitude": 64.068865,
+          "id": "arp_lhr_gb",
+          "icao_code": "EGLL",
+          "iata_country_code": "GB",
+          "iata_code": "LHR",
+          "iata_city_code": "LON",
+          "city_name": "London",
+          "city": {
+            "name": "London",
+            "id": "cit_lon_gb",
+            "iata_country_code": "GB",
+            "iata_code": "LON",
+            "airports": [
+              {
+                "time_zone": "Europe/London",
+                "name": "Heathrow",
+                "longitude": -141.951519,
+                "latitude": 64.068865,
+                "id": "arp_lhr_gb",
+                "icao_code": "EGLL",
+                "iata_country_code": "GB",
+                "iata_code": "LHR"
+              }
+            ]
+          },
+          "airports": [
+            {
+              "time_zone": "Europe/London",
+              "name": "Heathrow",
+              "longitude": -141.951519,
+              "latitude": 64.068865,
+              "id": "arp_lhr_gb",
+              "icao_code": "EGLL",
+              "iata_country_code": "GB",
+              "iata_code": "LHR",
+              "iata_city_code": "LON",
+              "city_name": "London",
+              "city": {
+                "name": "London",
+                "id": "cit_lon_gb",
+                "iata_country_code": "GB",
+                "iata_code": "LON",
+                "airports": [
+                  {
+                    "time_zone": "Europe/London",
+                    "name": "Heathrow",
+                    "longitude": -141.951519,
+                    "latitude": 64.068865,
+                    "id": "arp_lhr_gb",
+                    "icao_code": "EGLL",
+                    "iata_country_code": "GB",
+                    "iata_code": "LHR"
+                  }
+                ]
+              }
+            }
+          ]
+        },
+        "destination_type": "airport",
+        "destination": {
+          "type": "airport",
+          "time_zone": "Europe/London",
+          "name": "Heathrow",
+          "longitude": -141.951519,
+          "latitude": 64.068865,
+          "id": "arp_lhr_gb",
+          "icao_code": "EGLL",
+          "iata_country_code": "GB",
+          "iata_code": "LHR",
+          "iata_city_code": "LON",
+          "city_name": "London",
+          "city": {
+            "name": "London",
+            "id": "cit_lon_gb",
+            "iata_country_code": "GB",
+            "iata_code": "LON",
+            "airports": [
+              {
+                "time_zone": "Europe/London",
+                "name": "Heathrow",
+                "longitude": -141.951519,
+                "latitude": 64.068865,
+                "id": "arp_lhr_gb",
+                "icao_code": "EGLL",
+                "iata_country_code": "GB",
+                "iata_code": "LHR"
+              }
+            ]
+          },
+          "airports": [
+            {
+              "time_zone": "Europe/London",
+              "name": "Heathrow",
+              "longitude": -141.951519,
+              "latitude": 64.068865,
+              "id": "arp_lhr_gb",
+              "icao_code": "EGLL",
+              "iata_country_code": "GB",
+              "iata_code": "LHR",
+              "iata_city_code": "LON",
+              "city_name": "London",
+              "city": {
+                "name": "London",
+                "id": "cit_lon_gb",
+                "iata_country_code": "GB",
+                "iata_code": "LON",
+                "airports": [
+                  {
+                    "time_zone": "Europe/London",
+                    "name": "Heathrow",
+                    "longitude": -141.951519,
+                    "latitude": 64.068865,
+                    "id": "arp_lhr_gb",
+                    "icao_code": "EGLL",
+                    "iata_country_code": "GB",
+                    "iata_code": "LHR"
+                  }
+                ]
+              }
+            }
+          ]
+        },
+        "departure_date": "2020-04-24"
+      }
+    ],
+    "offers": [
+      {
+        "total_emissions_kg": "460",
+        "total_currency": "GBP",
+        "total_amount": "45.00",
+        "tax_currency": "GBP",
+        "tax_amount": "40.80",
+        "supported_passenger_identity_document_types": [
+          "passport"
+        ],
+        "slices": [
+          {
+            "segments": [
+              {
+                "stops": [
+                  {
+                    "id": "sto_00009htYpSCXrwaB9Dn456",
+                    "duration": "PT02H26M",
+                    "departing_at": "2020-06-13T16:38:02",
+                    "arriving_at": "2020-06-13T16:38:02",
+                    "airport": {
+                      "type": "airport",
+                      "time_zone": "Europe/London",
+                      "name": "Heathrow",
+                      "longitude": -141.951519,
+                      "latitude": 64.068865,
+                      "id": "arp_lhr_gb",
+                      "icao_code": "EGLL",
+                      "iata_country_code": "GB",
+                      "iata_code": "LHR",
+                      "iata_city_code": "LON",
+                      "city_name": "London",
+                      "city": {
+                        "name": "London",
+                        "id": "cit_lon_gb",
+                        "iata_country_code": "GB",
+                        "iata_code": "LON",
+                        "airports": [
+                          {
+                            "time_zone": "Europe/London",
+                            "name": "Heathrow",
+                            "longitude": -141.951519,
+                            "latitude": 64.068865,
+                            "id": "arp_lhr_gb",
+                            "icao_code": "EGLL",
+                            "iata_country_code": "GB",
+                            "iata_code": "LHR"
+                          }
+                        ]
+                      },
+                      "airports": [
+                        {
+                          "time_zone": "Europe/London",
+                          "name": "Heathrow",
+                          "longitude": -141.951519,
+                          "latitude": 64.068865,
+                          "id": "arp_lhr_gb",
+                          "icao_code": "EGLL",
+                          "iata_country_code": "GB",
+                          "iata_code": "LHR",
+                          "iata_city_code": "LON",
+                          "city_name": "London",
+                          "city": {
+                            "name": "London",
+                            "id": "cit_lon_gb",
+                            "iata_country_code": "GB",
+                            "iata_code": "LON",
+                            "airports": [
+                              {
+                                "time_zone": "Europe/London",
+                                "name": "Heathrow",
+                                "longitude": -141.951519,
+                                "latitude": 64.068865,
+                                "id": "arp_lhr_gb",
+                                "icao_code": "EGLL",
+                                "iata_country_code": "GB",
+                                "iata_code": "LHR"
+                              }
+                            ]
+                          }
+                        }
+                      ]
+                    }
+                  }
+                ],
+                "passengers": [
+                  {
+                    "passenger_id": "passenger_0",
+                    "fare_basis_code": "OXZ0RO",
+                    "cabin_class_marketing_name": "Economy Basic",
+                    "cabin_class": "economy",
+                    "cabin": {
+                      "name": "economy",
+                      "marketing_name": "Economy Basic",
+                      "amenities": {
+                        "wifi": {
+                          "cost": "free",
+                          "available": "true"
+                        },
+                        "seat": {
+                          "type": "standard",
+                          "pitch": "32",
+                          "legroom": "standard"
+                        },
+                        "power": {
+                          "available": "true"
+                        }
+                      }
+                    },
+                    "baggages": [
+                      {
+                        "type": "checked",
+                        "quantity": 1
+                      }
+                    ]
+                  }
+                ],
+                "origin_terminal": "B",
+                "origin": {
+                  "time_zone": "Europe/London",
+                  "name": "Heathrow",
+                  "longitude": -141.951519,
+                  "latitude": 64.068865,
+                  "id": "arp_lhr_gb",
+                  "icao_code": "EGLL",
+                  "iata_country_code": "GB",
+                  "iata_code": "LHR",
+                  "iata_city_code": "LON",
+                  "city_name": "London",
+                  "city": {
+                    "name": "London",
+                    "id": "cit_lon_gb",
+                    "iata_country_code": "GB",
+                    "iata_code": "LON",
+                    "airports": [
+                      {
+                        "time_zone": "Europe/London",
+                        "name": "Heathrow",
+                        "longitude": -141.951519,
+                        "latitude": 64.068865,
+                        "id": "arp_lhr_gb",
+                        "icao_code": "EGLL",
+                        "iata_country_code": "GB",
+                        "iata_code": "LHR"
+                      }
+                    ]
+                  }
+                },
+                "operating_carrier_flight_number": "4321",
+                "operating_carrier": {
+                  "name": "British Airways",
+                  "logo_symbol_url": "https://assets.duffel.com/img/airlines/for-light-background/full-color-logo/BA.svg",
+                  "logo_lockup_url": "https://assets.duffel.com/img/airlines/for-light-background/full-color-lockup/BA.svg",
+                  "id": "arl_00001876aqC8c5umZmrRds",
+                  "iata_code": "BA",
+                  "conditions_of_carriage_url": "https://www.britishairways.com/en-gb/information/legal/british-airways/general-conditions-of-carriage"
+                },
+                "marketing_carrier_flight_number": "1234",
+                "marketing_carrier": {
+                  "name": "British Airways",
+                  "logo_symbol_url": "https://assets.duffel.com/img/airlines/for-light-background/full-color-logo/BA.svg",
+                  "logo_lockup_url": "https://assets.duffel.com/img/airlines/for-light-background/full-color-lockup/BA.svg",
+                  "id": "arl_00001876aqC8c5umZmrRds",
+                  "iata_code": "BA",
+                  "conditions_of_carriage_url": "https://www.britishairways.com/en-gb/information/legal/british-airways/general-conditions-of-carriage"
+                },
+                "id": "seg_00009htYpSCXrwaB9Dn456",
+                "duration": "PT02H26M",
+                "distance": "424.2",
+                "destination_terminal": "5",
+                "destination": {
+                  "time_zone": "America/New_York",
+                  "name": "John F. Kennedy International Airport",
+                  "longitude": -73.778519,
+                  "latitude": 40.640556,
+                  "id": "arp_jfk_us",
+                  "icao_code": "KJFK",
+                  "iata_country_code": "US",
+                  "iata_code": "JFK",
+                  "iata_city_code": "NYC",
+                  "city_name": "New York",
+                  "city": {
+                    "name": "New York",
+                    "id": "cit_nyc_us",
+                    "iata_country_code": "US",
+                    "iata_code": "NYC"
+                  }
+                },
+                "departing_at": "2020-06-13T16:38:02",
+                "arriving_at": "2020-06-13T16:38:02",
+                "aircraft": {
+                  "name": "Airbus Industries A380",
+                  "id": "arc_00009UhD4ongolulWd91Ky",
+                  "iata_code": "380"
+                }
+              }
+            ],
+            "origin_type": "airport",
+            "origin": {
+              "type": "airport",
+              "time_zone": "Europe/London",
+              "name": "Heathrow",
+              "longitude": -141.951519,
+              "latitude": 64.068865,
+              "id": "arp_lhr_gb",
+              "icao_code": "EGLL",
+              "iata_country_code": "GB",
+              "iata_code": "LHR",
+              "iata_city_code": "LON",
+              "city_name": "London",
+              "city": {
+                "name": "London",
+                "id": "cit_lon_gb",
+                "iata_country_code": "GB",
+                "iata_code": "LON",
+                "airports": [
+                  {
+                    "time_zone": "Europe/London",
+                    "name": "Heathrow",
+                    "longitude": -141.951519,
+                    "latitude": 64.068865,
+                    "id": "arp_lhr_gb",
+                    "icao_code": "EGLL",
+                    "iata_country_code": "GB",
+                    "iata_code": "LHR"
+                  }
+                ]
+              },
+              "airports": [
+                {
+                  "time_zone": "Europe/London",
+                  "name": "Heathrow",
+                  "longitude": -141.951519,
+                  "latitude": 64.068865,
+                  "id": "arp_lhr_gb",
+                  "icao_code": "EGLL",
+                  "iata_country_code": "GB",
+                  "iata_code": "LHR",
+                  "iata_city_code": "LON",
+                  "city_name": "London",
+                  "city": {
+                    "name": "London",
+                    "id": "cit_lon_gb",
+                    "iata_country_code": "GB",
+                    "iata_code": "LON",
+                    "airports": [
+                      {
+                        "time_zone": "Europe/London",
+                        "name": "Heathrow",
+                        "longitude": -141.951519,
+                        "latitude": 64.068865,
+                        "id": "arp_lhr_gb",
+                        "icao_code": "EGLL",
+                        "iata_country_code": "GB",
+                        "iata_code": "LHR"
+                      }
+                    ]
+                  }
+                }
+              ]
+            },
+            "ngs_shelf": 1,
+            "id": "sli_00009htYpSCXrwaB9Dn123",
+            "fare_brand_name": "Basic",
+            "duration": "PT02H26M",
+            "destination_type": "airport",
+            "destination": {
+              "type": "airport",
+              "time_zone": "Europe/London",
+              "name": "Heathrow",
+              "longitude": -141.951519,
+              "latitude": 64.068865,
+              "id": "arp_lhr_gb",
+              "icao_code": "EGLL",
+              "iata_country_code": "GB",
+              "iata_code": "LHR",
+              "iata_city_code": "LON",
+              "city_name": "London",
+              "city": {
+                "name": "London",
+                "id": "cit_lon_gb",
+                "iata_country_code": "GB",
+                "iata_code": "LON",
+                "airports": [
+                  {
+                    "time_zone": "Europe/London",
+                    "name": "Heathrow",
+                    "longitude": -141.951519,
+                    "latitude": 64.068865,
+                    "id": "arp_lhr_gb",
+                    "icao_code": "EGLL",
+                    "iata_country_code": "GB",
+                    "iata_code": "LHR"
+                  }
+                ]
+              },
+              "airports": [
+                {
+                  "time_zone": "Europe/London",
+                  "name": "Heathrow",
+                  "longitude": -141.951519,
+                  "latitude": 64.068865,
+                  "id": "arp_lhr_gb",
+                  "icao_code": "EGLL",
+                  "iata_country_code": "GB",
+                  "iata_code": "LHR",
+                  "iata_city_code": "LON",
+                  "city_name": "London",
+                  "city": {
+                    "name": "London",
+                    "id": "cit_lon_gb",
+                    "iata_country_code": "GB",
+                    "iata_code": "LON",
+                    "airports": [
+                      {
+                        "time_zone": "Europe/London",
+                        "name": "Heathrow",
+                        "longitude": -141.951519,
+                        "latitude": 64.068865,
+                        "id": "arp_lhr_gb",
+                        "icao_code": "EGLL",
+                        "iata_country_code": "GB",
+                        "iata_code": "LHR"
+                      }
+                    ]
+                  }
+                }
+              ]
+            },
+            "conditions": {
+              "priority_check_in": "true",
+              "priority_boarding": "true",
+              "change_before_departure": {
+                "penalty_currency": "GBP",
+                "penalty_amount": "100.00",
+                "allowed": true
+              },
+              "advance_seat_selection": "true"
+            },
+            "comparison_key": "BmlZDw=="
+          }
+        ],
+        "private_fares": [
+          {
+            "type": "corporate",
+            "tracking_reference": "ABN:2345678",
+            "tour_code": "578DFL",
+            "corporate_code": "FLX53"
+          }
+        ],
+        "payment_requirements": {
+          "requires_instant_payment": false,
+          "price_guarantee_expires_at": "2020-01-17T10:42:14Z",
+          "payment_required_by": "2020-01-17T10:42:14Z"
+        },
+        "passengers": [
+          {
+            "type": "adult",
+            "loyalty_programme_accounts": [
+              {
+                "airline_iata_code": "BA",
+                "account_number": "12901014"
+              }
+            ],
+            "id": "pas_00009hj8USM7Ncg31cBCL",
+            "given_name": "Amelia",
+            "fare_type": "contract_bulk",
+            "family_name": "Earhart",
+            "age": 14
+          }
+        ],
+        "passenger_identity_documents_required": false,
+        "partial": true,
+        "owner": {
+          "name": "British Airways",
+          "logo_symbol_url": "https://assets.duffel.com/img/airlines/for-light-background/full-color-logo/BA.svg",
+          "logo_lockup_url": "https://assets.duffel.com/img/airlines/for-light-background/full-color-lockup/BA.svg",
+          "id": "arl_00001876aqC8c5umZmrRds",
+          "iata_code": "BA",
+          "conditions_of_carriage_url": "https://www.britishairways.com/en-gb/information/legal/british-airways/general-conditions-of-carriage"
+        },
+        "live_mode": true,
+        "id": "off_00009htYpSCXrwaB9DnUm0",
+        "expires_at": "2020-01-17T10:42:14.545Z",
+        "created_at": "2020-01-17T10:12:14.545Z",
+        "conditions": {
+          "refund_before_departure": {
+            "penalty_currency": "GBP",
+            "penalty_amount": "100.00",
+            "allowed": true
+          },
+          "change_before_departure": {
+            "penalty_currency": "GBP",
+            "penalty_amount": "100.00",
+            "allowed": true
+          }
+        },
+        "base_currency": "GBP",
+        "base_amount": "30.20"
+      }
+    ],
+    "live_mode": false,
+    "id": "orq_00009hjdomFOCJyxHG7k7k",
+    "created_at": "2020-02-12T15:21:01.927Z",
+    "client_key": "SFMyNTY.g2gDdAAAAANkAAlsaXZlX21vZGVkAAVmYWxzZWQAD29yZ2FuaXNhdGlvbl9pZG0AAAAab3JnXzAwMDA5VWhGY29ERGk5TTFTRjhiS2FkAAtyZXNvdXJjZV9pZG0AAAAab3JxXzAwMDBBVkZWZnFJUXFBWXpYeVRRVlVuBgDpOCvdhwFiAAFRgA.df1RmLeBFUR7r1WFHHiEksilfSZNLhmPX0nj5VOKWJ4",
+    "cabin_class": "economy"
+  }
+}
+{
+  "stay": {
+    "checkIn": "2025-12-01",
+    "checkOut": "2025-12-05"
+  },
+  "occupancies": [
+    {
+      "rooms": 1,
+      "adults": 2,
+      "children": 0
+    }
+  ],
+  "destination": {
+    "name": "Paris"
+  }
+}
+# Create an offer request
+{
+  "stay": {
+    "checkIn": "2025-12-01",
+    "checkOut": "2025-12-05"
+  },
+  "occupancies": [
+    {
+      "rooms": 1,
+      "adults": 2,
+      "children": 0
+    }
+  ],
+  "destination": {
+    "name": "Paris"
+  }
+}
+
+{
+  "holder": {
+    "name": "John",
+    "user": "Doe",
+    "email": "john@example.com"
+  },
+  "rooms": [
+    {
+      "rateKey": "RK_ABC123",
+      // possibly additional pax / guest info as required
+    }
+  ]
+}
+
+{
+  "hotels": {
+    "hotels": [
+      {
+        "code": 1234,
+        "name": "Hotel Example",
+        "rooms": [
+          {
+            "rates": [
+              {
+                "rateKey": "RK_ABC123",
+                "rateType": "BOOKABLE",
+                "net": 200.0,
+                "sellingRate": 250.0,
+                "currency": "USD",
+                "cancellationPolicies": [ /* ... */ ]
+              }
+            ]
+          }
+        ]
+      }
+    ]
+  }
+}
+
+{
+  "return_offers": false,
+  "supplier_timeout": 10000,
+  "slices": [
+    {
+      "origin": "LHR",
+      "destination": "JFK",
+      "departure_time": {
+        "to": "17:00",
+        "from": "09:45"
+      },
+      "departure_date": "2020-04-24",
+      "arrival_time": {
+        "to": "17:00",
+        "from": "09:45"
+      }
+    }
+  ],
+  "private_fares": {
+    "UA": [
+      {
+        "corporate_code": "1234",
+        "tour_code": "578DFL"
+      }
+    ]
+  },
+  "passengers": [
+    {
+      "family_name": "Earhart",
+      "given_name": "Amelia",
+      "loyalty_programme_accounts": [
+        {
+          "account_number": "12901014",
+          "airline_iata_code": "BA"
+        }
+      ],
+      "type": "adult"
+    },
+    {
+      "age": 14
+    },
+    {
+      "fare_type": "student"
+    },
+    {
+      "age": 5,
+      "fare_type": "contract_bulk_child"
+    }
+  ],
+  "max_connections": 0,
+  "cabin_class": "economy"
+})
+
+{
+  "data": {
+    "slices": [
+      {
+        "origin": "NYC",
+        "destination": "ATL",
+        "departure_date": "2025-06-21"
+      }
+    ],
+    "passengers": [
+      { "type": "adult" }
+    ],
+    "cabin_class": "economy"
+  }
+}
+{
+  "data": {
+    "id": "offer_request_123",
+    "offers": [
+      {
+        "id": "offer_456",
+        "total_amount": {
+          "amount": "300.00",
+          "currency": "USD"
+        },
+        "slices": [ /* flights, segments */ ]
+      }
+    ],
+    "slices": [ /* your original slices echoed */ ],
+    "passengers": [ /* your input passengers, with assigned IDs */ ]
+  }
+}
+
+
+{
+  "data": {
+    "id": "offer_request_123",
+    "offers": [
+      {
+        "id": "offer_456",
+        "total_amount": {
+          "amount": "300.00",
+          "currency": "USD"
+        },
+        "slices": [ /* flights, segments */ ]
+      }
+    ],
+    "slices": [ /* your original slices echoed */ ],
+    "passengers": [ /* your input passengers, with assigned IDs */ ]
+  }
+}
