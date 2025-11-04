@@ -6,8 +6,10 @@ import ItineraLogo from "../assets/ItineraLogo.png";
 
 export default function UserOnboarding() {
   const navigate = useNavigate();
+  const [ageRange, setAgeRange] = useState("");
+  const [gender, setGender] = useState("");
+  const [homeLocation, setHomeLocation] = useState("");
   const [preferredPace, setPreferredPace] = useState("");
-  const [travelStyle, setTravelStyle] = useState("");
   const [preferredTravelMode, setPreferredTravelMode] = useState("");
   const [interests, setInterests] = useState("");
   const [dietaryRestrictions, setDietaryRestrictions] = useState("");
@@ -41,14 +43,16 @@ export default function UserOnboarding() {
 
     const { error } = await supabase.from("user_onboarding").insert([
       {
-        id: user.id,
+        user_id: user.id,
         preferred_pace: preferredPace,
-        travel_style: travelStyle,
         preferred_travel_mode: preferredTravelMode,
         interests: interests,
         dietary_restrictions: dietaryRestrictions,
         accessibility: selectedAccessibility,
         budget_range: budgetRange,
+        age_range: ageRange,
+        gender: gender,
+        home_location: homeLocation,
       },
     ]);
 
@@ -75,6 +79,43 @@ export default function UserOnboarding() {
           onSubmit={handleSubmit}
           className="flex flex-col gap-4 w-full mt-5"
         >
+          <label>Age Range</label>
+          <select
+            id="ageRange"
+            value={ageRange}
+            onChange={(e) => setAgeRange(e.target.value)}
+            className="border border-gray-300 rounded-lg p-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
+          >
+            <option value="">-- Select --</option>
+            <option value="18-24">18-24</option>
+            <option value="25-34">25-34</option>
+            <option value="35-44">35-44</option>
+            <option value="45-54">45-54</option>
+            <option value="55-64">55-64</option>
+            <option value="65+">65+</option>
+          </select>
+          <label>Gender</label>
+          <select
+            id="gender"
+            value={gender}
+            onChange={(e) => setGender(e.target.value)}
+            className="border border-gray-300 rounded-lg p-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
+          >
+            <option value="">-- Select --</option>
+            <option value="Male">Male</option>
+            <option value="Female">Female</option>
+            <option value="Other">Other</option>
+          </select>
+          <label>Home Location</label>
+          <input
+            type="text"
+            placeholder="Ex: Paris, Île-de-France, France or San Francisco, CA, USA"
+            className="border border-gray-300 rounded-lg p-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
+            value={homeLocation}
+            onChange={(e) => {
+              setHomeLocation(e.target.value);
+            }}
+          />
           <label>Preferred Pace of Travel</label>
           <select
             id="preferredPace"
@@ -86,20 +127,6 @@ export default function UserOnboarding() {
             <option value="Relaxed">Relaxed</option>
             <option value="Balanced">Balanced</option>
             <option value="Fast-paced">Fast-paced</option>
-          </select>
-          <label>Travel Style</label>
-          <select
-            id="travelStyle"
-            value={travelStyle}
-            onChange={(e) => setTravelStyle(e.target.value)}
-            className="border border-gray-300 rounded-lg p-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
-          >
-            <option value="">-- Select --</option>
-            <option value="Solo">Solo</option>
-            <option value="Couple">Couple</option>
-            <option value="Friends">Friends</option>
-            <option value="Family">Family</option>
-            <option value="Business">Business</option>
           </select>
           <label>Preferred Mode of Travel</label>
           <select
@@ -175,13 +202,20 @@ export default function UserOnboarding() {
             type="submit"
             disabled={
               !preferredPace ||
-              !travelStyle ||
+              !gender ||
               !preferredTravelMode ||
-              !budgetRange
+              !budgetRange ||
+              !ageRange ||
+              !homeLocation
             }
             className={`p-2 rounded-lg border-2 transition-colors duration-300
     ${
-      !preferredPace || !travelStyle || !preferredTravelMode || !budgetRange
+      !preferredPace ||
+      !gender ||
+      !preferredTravelMode ||
+      !budgetRange ||
+      !ageRange ||
+      !homeLocation
         ? "bg-gray-300 border-gray-300 text-white cursor-not-allowed"
         : "bg-[#81b4fa] border-[#81b4fa] text-white hover:bg-white hover:text-[#81b4fa]"
     }`}
