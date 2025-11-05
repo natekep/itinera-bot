@@ -1,10 +1,16 @@
-import React, { useState, useRef, useEffect } from "react";
+import React, { useState, useRef } from "react";
 import axios from "axios";
 import { type RoutesByMode } from "../pages/Iram";
+import { createClient } from "@supabase/supabase-js";
+
+const supabase = createClient(
+  import.meta.env.VITE_SUPABASE_URL!,
+  import.meta.env.VITE_SUPABASE_ANON_KEY!
+);
 
 export const TimeDisplay: React.FC<{ tz: string }> = ({ tz }) => {
   const [time, setTime] = useState("");
-  useEffect(() => {
+  React.useEffect(() => {
     if (!tz || tz === "Unknown") return setTime("Unknown");
     const tick = () =>
       setTime(
@@ -36,6 +42,7 @@ interface RoutePanelProps {
   destinationTimezones: string[];
   setDestinationTimezones: (tz: string[]) => void;
   setRoutesByMode: (r: RoutesByMode) => void;
+  onTripPlanned?: () => Promise<void>;
 }
 
 const RoutePanel: React.FC<RoutePanelProps> = ({
@@ -53,6 +60,7 @@ const RoutePanel: React.FC<RoutePanelProps> = ({
   destinationTimezones,
   setDestinationTimezones,
   setRoutesByMode,
+  onTripPlanned,
 }) => {
   const [newDest, setNewDest] = useState("");
   const [loading, setLoading] = useState(false);
@@ -77,6 +85,9 @@ const RoutePanel: React.FC<RoutePanelProps> = ({
     setRoutesByMode({});
 
     try {
+      const { data: userData } = await supabase.auth.getUser();
+      const user = userData?.user;
+
       const all = [origin, ...destinations];
       const coords = (
         await Promise.all(
@@ -88,69 +99,36 @@ const RoutePanel: React.FC<RoutePanelProps> = ({
       ).filter(Boolean);
 
       setCoords(coords);
-      const [orig, ...destCoords] = coords;
-      
-      const modesToFetch = ['DRIVE', 'TRANSIT', 'BICYCLE', 'WALK'];
+
+      // Fetch routes
+      const modes = ["DRIVE", "TRANSIT", "BICYCLE", "WALK"];
       const routesData: RoutesByMode = {};
 
-      for (const mode of modesToFetch) {
-        try {
-          
-          const routeResult = await fetchData("http://127.0.0.1:8000/multi_route", {
-            origins: origin,
-            waypoints: destinations.slice(0, -1).join("|"),
-            destination: destinations[destinations.length - 1],
-            travelMode: mode,
-          });
-
-          if (routeResult.routes && routeResult.routes.length > 0) {
-            routesData[mode] = routeResult.routes[0];
-          }
-        } catch (error) {
-          
-          console.warn(`Could not fetch route for mode ${mode}: `, error);
-        }
+      for (const mode of modes) {
+        const routeResult = await fetchData("http://127.0.0.1:8000/multi_route", {
+          origins: origin,
+          waypoints: destinations.slice(0, -1).join("|"),
+          destination: destinations[destinations.length - 1],
+          travelMode: mode,
+        });
+        if (routeResult.routes?.length) routesData[mode] = routeResult.routes[0];
       }
 
       setRoutesByMode(routesData);
-
-      const primaryRoute = routesData['DRIVE'] ? [routesData['DRIVE']] : [];
+      const primaryRoute = routesData["DRIVE"] ? [routesData["DRIVE"]] : [];
       setRouteLegs(primaryRoute);
 
-      // Nearby attractions for last destination
-      const lastDest = destCoords[destCoords.length - 1];
-
-      // Check if lastDest exists before trying to use it
-      if (lastDest) {
-        const placesRes = await fetchData("http://127.0.0.1:8000/places", {
-          lat: lastDest.lat,
-          lng: lastDest.lng,
-          radius: 2000,
-          budget,
+      // Save user trip in Supabase (optional)
+      if (user) {
+        await supabase.from("user_trips").upsert({
+          user_id: user.id,
+          origin,
+          destinations,
+          updated_at: new Date().toISOString(),
         });
-        setPlaces(
-          (placesRes.places || []).map((p: any) => ({
-            displayName: p.displayName?.text || "Unknown",
-            rating: p.rating || 0,
-            budget,
-          }))
-        );
-      } else {
-        setPlaces([]); 
       }
 
-      const allTz = await Promise.all(
-        coords.map(async (c) => {
-          const res = await fetchData("http://127.0.0.1:8000/timezone", {
-            lat: c.lat,
-            lng: c.lng,
-          });
-          return res.timeZoneId || "Unknown";
-        })
-      );
-
-      setOriginTimezone(allTz[0]);
-      setDestinationTimezones(allTz.slice(1));
+      if (onTripPlanned) await onTripPlanned();
     } catch (e: any) {
       alert(`Error: ${e.message}`);
     } finally {

@@ -115,8 +115,9 @@ const PlaceSidebar: React.FC<PlaceSidebarProps> = ({
                 key={i}
                 className="text-sm text-gray-700 bg-white border border-gray-200 rounded-md px-3 py-2 shadow-sm"
               >
-                <strong>{p.displayName || "Unnamed Place"}</strong>{" "}
+                <strong>{p.name || "Unnamed Place"}</strong>{" "}
                 ({p.rating ?? "N/A"} ★)
+                {p.address && <p className="text-gray-500 text-xs">{p.address}</p>}
               </li>
             ))}
           </ul>
