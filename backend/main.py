@@ -5,11 +5,15 @@ import uvicorn
 from fastapi import FastAPI, Query, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
-from typing import List, Literal
+from typing import Optional, Dict
+from supabase import create_client, Client
 # from openai import OpenAI  # Changed import
 from dotenv import load_dotenv
+from openai import OpenAI
+import json
+import re
 
-
+load_dotenv()
 app = FastAPI()
 
 # CORS (Cross-Origin Resource Sharing) prohibits unauthorized websites, endpoints, or servers from accessing the API
@@ -28,148 +32,294 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-# Initialize OpenAI client
-#client = OpenAI(api_key=os.getenv("OPENAI_API_KEY"))
+# SUPABASE setup
+supabase: Client = create_client(
+    os.getenv("SUPABASE_URL"), os.getenv("SUPABASE_SERVICE_ROLE_KEY")
+)
 
-class Message(BaseModel):
-    role: Literal["user", "assistant", "system"]
-    content: str
+# OpenAI setup
+client = OpenAI(api_key=os.getenv("OPENAI_API_KEY"))
 
-class ChatRequest(BaseModel):
-    messages: List[Message]
-
-class ChatResponse(BaseModel):
-    message: Message
-
-GOOGLE_API_KEY = os.getenv("GOOGLE_MAPS_API_KEY")
 
 @app.get("/")
 def read_root():
     return {"message": "FastAPI backend running!"}
 
-# @app.post("/v1/chat", response_model=ChatResponse)
-# async def chat(request: ChatRequest):
-#     if not request.messages:
-#         raise HTTPException(status_code=400, detail="Messages array cannot be empty")
-    
-#     api_key = os.getenv("OPENAI_API_KEY")
-#     if not api_key:
-#         raise HTTPException(status_code=500, detail="OpenAI API key not configured")
-    
-#     print(f"Received {len(request.messages)} messages")  # Debug logging
-    
-#     try:
-#         # Convert messages to OpenAI format
-#         openai_messages = [
-#             {"role": msg.role, "content": msg.content}
-#             for msg in request.messages
-#         ]
-        
-#         print(f"Calling OpenAI with messages: {openai_messages}")  # Debug logging
-        
-#         # Call OpenAI API
-#         response = client.chat.completions.create(
-#             model="gpt-5-nano",
-#             messages=openai_messages
-#         )
-        
-#         print(f"OpenAI response received")  # Debug logging
-        
-#         # Extract assistant's response
-#         assistant_message = Message(
-#             role="assistant",
-#             content=response.choices[0].message.content
-#         )
-        
-#         return ChatResponse(message=assistant_message)
-    
-#     except Exception as e:
-#         print(f"Error in chat endpoint: {type(e).__name__}: {str(e)}")  # Debug logging
-#         import traceback
-#         traceback.print_exc()  # Print full stack trace
-#         raise HTTPException(status_code=500, detail=f"Internal server error: {str(e)}")
+# BUSINESS LOGIC - Itinerary Generation
+from datetime import datetime
 
-# Geocode API: convert address to lat/lng
-@app.get("/geocode")
-def geocode(address: str):
-    url = f"https://maps.googleapis.com/maps/api/geocode/json?address={address}&key={GOOGLE_API_KEY}"
-    res = requests.get(url)
-    return res.json()
+def get_lat_lon_from_city(city_name: str):
+    url = "https://maps.googleapis.com/maps/api/geocode/json"
+    params = {
+        "address": city_name,
+        "key": os.getenv("GOOGLE_API_KEY")
+    }
 
-# Routes API: get optimized directions between points
-@app.get("/route")
-def route(origin: str, destination: str):
-    url = "https://routes.googleapis.com/directions/v2:computeRoutes"
+    response = requests.get(url, params=params)
+    data = response.json()
+
+    if response.status_code != 200 or not data.get("results"):
+        raise HTTPException(status_code=400, detail=f"Error geocoding city: {city_name}")
+
+    location = data["results"][0]["geometry"]["location"]
+    lat, lon = location["lat"], location["lng"]
+    return lat, lon
+
+def convert_to_iso(date_str: str) -> str:
+    """Convert mm/dd/yyyy → yyyy-mm-dd"""
+    try:
+        return datetime.strptime(date_str, "%m/%d/%Y").strftime("%Y-%m-%d")
+    except ValueError:
+        raise HTTPException(status_code=400, detail=f"Invalid date format: {date_str}")
+    
+def get_predicthq_events(lat: float, lon: float, start_date, end_date: str):
+    url = "https://api.predicthq.com/v1/events/"
+
     headers = {
-        "Content-Type": "application/json",
-        "X-Goog-Api-Key": GOOGLE_API_KEY
+        "Authorization": f"Bearer {os.getenv('PREDICTHQ_TOKEN')}",
+        "Accept": "application/json"
     }
-    body = {
-        "origin": {"address": origin},
-        "destination": {"address": destination},
-        "travelMode": "DRIVE",
-        "computeAlternativeRoutes": False,
-        "routeModifiers": {"avoidTolls": False, "avoidHighways": False},
-        "languageCode": "en-US",
-        "units": "METRIC"
+
+    params = {
+        "category": "concerts,festivals,performing-arts,sports,community,conferences",
+        "start.gte": start_date,
+        "start.lte": end_date,
+        "within": f"25mi@{lat},{lon}",
+        "limit": 10,
+        "sort": "start"
     }
-    res = requests.post(url, headers=headers, json=body)
-    return res.json()
 
-# Places API: find nearby attractions
-@app.get("/places")
-def places(lat: float, lng: float, radius: int = 1500, type: str = "tourist_attraction"):
-    url = "https://places.googleapis.com/v1/places:searchNearby"
-    headers = {
-        "Content-Type": "application/json",
-        "X-Goog-Api-Key": GOOGLE_API_KEY
+    response = requests.get(url, headers=headers, params=params)
+
+    if response.status_code != 200:
+        raise HTTPException(
+            status_code=response.status_code,
+            detail=f"PredictHQ API error: {response.text}"
+        )
+
+    data = response.json()
+    events = data.get("results", [])
+    events_clean = [simplify_phq_event(e) for e in events]
+    return events_clean
+
+def simplify_phq_event(event):
+    return {
+        "title": event.get("title"),
+        "category": event.get("category"),
+        "start": event.get("start_local"),
+        "end": event.get("end_local"),
+        "address": event.get("geo", {}).get("address", {}).get("formatted_address"),
+        "predicted_attendance": event.get("phq_attendance"),
+        "spend_estimate": event.get("predicted_event_spend"),
+        "venue": (
+            event["entities"][0]["name"]
+            if event.get("entities") else "Unknown"
+        )
     }
-    body = {
-        "locationRestriction": {
-            "circle": {"center": {"latitude": lat, "longitude": lng}, "radius": radius}
-        },
-        "includedTypes": [type],
-        "maxResultCount": 10
+
+def get_ticketmaster_events(city:str, start_date: str, end_date: str):
+    url = "https://app.ticketmaster.com/discovery/v2/events.json"
+    params = {
+        "apikey": os.getenv("TICKETMASTER_API_KEY"),
+        "city": city,
+        "countryCode": "US",
+        "radius": 25,  # miles
+        "unit": "miles",
+        "locale": "*",
+        "startDateTime": f"{start_date}T00:00:00Z",
+        "endDateTime": f"{end_date}T23:59:59Z",
+        "size": 10,
+        "sort": "date,asc"
     }
-    res = requests.post(url, headers=headers, json=body)
-    return res.json()
 
-# Distance Matrix API: total travel time/distance
-@app.get("/distance")
-def distance(origins: str, destinations: str):
-    url = f"https://maps.googleapis.com/maps/api/distancematrix/json?origins={origins}&destinations={destinations}&key={GOOGLE_API_KEY}"
-    res = requests.get(url)
-    return res.json()
+    response = requests.get(url, params=params)
 
+    if response.status_code != 200:
+        raise HTTPException(
+            status_code=response.status_code,
+            detail=f"Ticketmaster API error: {response.text}"
+        )
 
-# Time Zone API: get local time from coordinates
-@app.get("/timezone")
-def timezone(lat: float, lng: float):
-    timestamp = int(time.time())
-    url = f"https://maps.googleapis.com/maps/api/timezone/json?location={lat},{lng}&timestamp={timestamp}&key={GOOGLE_API_KEY}"
-    res = requests.get(url)
-    return res.json()
+    data = response.json()
+    events = data.get("_embedded", {}).get("events", [])
+    return events
 
+def simplify_ticketmaster_event(event):
+    venue_info = event.get("_embedded", {}).get("venues", [{}])[0]
 
-# Optional multi-stop route 
-@app.get("/multi_route")
-def multi_route(origins: str, waypoints: str, destination: str):
+    return {
+        "title": event.get("name"),
+        "category": event.get("classifications", [{}])[0].get("segment", {}).get("name"),
+        "start": event.get("dates", {}).get("start", {}).get("localDate"),
+        "end": None,  # Ticketmaster doesn’t always provide an end time
+        "venue": venue_info.get("name"),
+        "address": venue_info.get("address", {}).get("line1"),
+        "predicted_attendance": None,
+        "spend_estimate": None
+    }
+
+def generate_itinerary_with_llm(destination, check_in, check_out, num_guests, user_prefs, events):
+    prompt = f"""
+    You are an expert travel planner. Create a detailed, day-by-day itinerary for a trip to {destination}
+    from {check_in} to {check_out} for {num_guests} guest(s).
+
+    Traveler profile:
+    - Preferred pace: {user_prefs.get("preferred_pace")}
+    - Travel mode: {user_prefs.get("preferred_travel_mode")}
+    - Interests: {user_prefs.get("interests")}
+    - Dietary restrictions: {user_prefs.get("dietary_restrictions")}
+    - Budget: {user_prefs.get("budget_range")}
+    - Age range: {user_prefs.get("age_range")}
+    - Gender: {user_prefs.get("gender")}
+    - Home location: {user_prefs.get("home_location")}
+
+    Available local events (real data — **only use these for official events**):
+    {events}
+
+    Guidelines:
+    1. You **must prioritize** including activities and events from the list above whenever possible. Please at least include one event from predictHQ and one event from ticketmaster.
+    2. If you need to fill missing time slots (like meals or free time), only then suggest general attractions or restaurants that *truly exist* in {destination}. Use **widely known places only** (e.g., Golden Gate Park, Fisherman’s Wharf).
+    3. Never invent new or fictional venues or organizations. If unsure, choose a well-known tourist site, neighborhood, or restaurant instead.
+    4. Label the source of each activity as:
+    - `"PredictHQ"` — came directly from the PredictHQ event list
+    - `"Ticketmaster"` — came directly from the Ticketmaster list
+    - `"Model"` — for filler or contextual suggestions (like meals, breaks, sightseeing)
+    5. Keep a balanced but realistic schedule — most events should come from the provided list.
+    6. Each day should include 3–6 activities (morning, afternoon, evening).
+    7. Output **strict JSON** with the following schema:
+        {{
+        "destination": "...",
+        "days": [
+            {{
+            "date": "YYYY-MM-DD",
+            "activities": [
+                {{
+                "time": "Morning",
+                "name": "...",
+                "description": "...",
+                "explanation": "...",
+                "source": "PredictHQ | Ticketmaster | Model"
+                }}
+            ]
+            }}
+        ]
+        }}
     """
-    Compute route with multiple stops.
-    Example: /multi_route?origins=New+York&waypoints=Philadelphia|Baltimore&destination=Washington+DC
-    """
-    url = "https://routes.googleapis.com/directions/v2:computeRoutes"
-    headers = {
-        "Content-Type": "application/json",
-        "X-Goog-Api-Key": GOOGLE_API_KEY
+
+
+
+    # Get llm response
+    response = client.chat.completions.create(
+        model="gpt-4o-mini",
+        messages=[{"role": "system", "content": "You are a helpful itinerary planner."},
+                  {"role": "user", "content": prompt}],
+        temperature=0.7,
+    )
+
+    itinerary_text = response.choices[0].message.content
+    return itinerary_text
+
+
+# Input model - itinerary request
+class ItineraryRequest(BaseModel):
+    userId: str
+    destination: str
+    checkInDate: str
+    checkOutDate:str
+    numGuests: int
+
+
+@app.post("/generate_itinerary")
+async def generate_itinerary(request: ItineraryRequest):
+    # Get user trip details
+    user_id = request.userId
+    destination = request.destination
+    check_in = convert_to_iso(request.checkInDate)
+    check_out = convert_to_iso(request.checkOutDate)
+    guests = request.numGuests
+
+    print(f"Received itinerary request for {destination} ({check_in} → {check_out})")
+    print(f"User ID: {user_id}")
+    print(f"Guests: {guests}")
+
+    # Get user preferences for itinerary generation
+    try:
+        response = supabase.table("user_onboarding").select("*").eq("user_id", user_id).execute()
+        if not response.data:
+            raise HTTPException(status_code=404, detail="User preferences not found")
+        user_prefs = response.data[0]
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Error fetching preferences: {e}")
+
+    print("Fetched preferences:", user_prefs)
+
+    # Event Gathering
+    try:
+        lat, lon = get_lat_lon_from_city(destination)
+        print(f"Coordinates: {lat}, {lon}")
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Geocoding failed: {e}")
+
+    # Get phq events
+    try:
+        phq_events = get_predicthq_events(lat, lon, check_in, check_out)
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+    
+    # ticketmaster events
+    try:
+        tm_events = get_ticketmaster_events(destination, check_in, check_out)
+        tm_events_clean = [simplify_ticketmaster_event(e) for e in tm_events]
+    except Exception as e:
+        tm_events_clean = []
+        print(f"Ticketmaster error: {e}")
+
+    # merge both events
+    combined_events = phq_events + tm_events_clean
+    print(f"Fetched {len(combined_events)} total events")
+
+    # generate itinerary
+    try:
+        ai_raw_output = generate_itinerary_with_llm(
+            destination, check_in, check_out, guests, user_prefs, combined_events
+        )
+
+        # Clean and enforce valid JSON
+        if isinstance(ai_raw_output, str):
+            clean_output = re.sub(r"^```(json)?", "", ai_raw_output)
+            clean_output = re.sub(r"```$", "", clean_output).strip()
+
+            try:
+                ai_itinerary = json.loads(clean_output)
+            except json.JSONDecodeError as e:
+                print("JSON parsing failed, raw output:", ai_raw_output)
+                raise HTTPException(status_code=500, detail=f"Invalid JSON from LLM: {e}")
+        else:
+            # If the LLM already returned a dict
+            ai_itinerary = ai_raw_output
+
+    except Exception as e:
+        print("LLM itinerary generation error:", e)
+        ai_itinerary = {"error": str(e)}
+
+    # Log for debugging
+    print(f"Final parsed itinerary object:\n{ai_itinerary}")
+
+    # Return clean JSON to frontend
+    return {
+        "city": destination,
+        "coordinates": {"lat": lat, "lon": lon},
+        "ai_itinerary": ai_itinerary
     }
-    waypoint_list = [{"address": w} for w in waypoints.split("|")]
-    body = {
-        "origin": {"address": origins},
-        "destination": {"address": destination},
-        "intermediates": waypoint_list,
-        "travelMode": "DRIVE",
-        "optimizeWaypointOrder": True
-    }
-    res = requests.post(url, headers=headers, json=body)
-    return res.json()
+
+
+        
+
+
+
+
+
+
+
+
+

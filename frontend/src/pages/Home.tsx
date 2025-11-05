@@ -1,26 +1,60 @@
 import { Link } from "react-router-dom";
+import { useEffect, useState } from "react";
+import { supabase } from "../supabaseClient";
+import type { Session } from "@supabase/supabase-js";
 
 export default function Home() {
+  const [session, setSession] = useState<Session | null>(null);
+
+  useEffect(() => {
+    supabase.auth.getSession().then(({ data: { session } }) => {
+      setSession(session);
+    });
+
+    const {
+      data: { subscription },
+    } = supabase.auth.onAuthStateChange((_event, session) => {
+      setSession(session);
+    });
+
+    return () => subscription.unsubscribe();
+  }, []);
   return (
-    <div className="mt-20 ml-[5%]">
-      <h1 className="text-[#81b4fa] text-9xl">Itinera</h1>
-      <div className="text-xl mt-3">
-        <p className="">
-          Your AI-powered trip planner that builds custom itineraries
-        </p>
-        <p>so you can explore the experiences you actually want</p>
-        <div className="flex gap-3">
-          <Link to="/create">
-            <button className="bg-[#81b4fa] text-white text-xl px-5 py-2 rounded-full border-2 border-[#81b4fa] hover:bg-white hover:text-[#81b4fa] transition-colors duration-300 mt-5">
-              Plan your vacation
-            </button>
-          </Link>
-          <Link to="/about">
-            <button className="bg-white border-2 border-[#81b4fa] text-[#81b4fa] text-xl px-5 py-2 rounded-full hover:bg-[#81b4fa] hover:text-white transition-colors duration-200 mt-5">
-              View Saved Itineraries
-            </button>
-          </Link>
-        </div>
+    <div className="flex flex-col items-center justify-center h-[80vh] mt-[5%] bg-background">
+      <h1 className="text-black text-7xl font-semibold">Plan Your Perfect</h1>
+      <h1 className="text-blue-600 text-7xl font-semibold">Adventure</h1>
+      <p className="text-gray-500 text-2xl font-normal text-center mx-[15%] mt-[1%]">
+        Let AI craft personalized travel itineraries tailored to your interests,
+        pace, and style. Your dream trip, intelligently planned.
+      </p>
+      <div className="flex flex-row mt-[3%] gap-8">
+        {session ? (
+          <>
+            <Link to="/create">
+              <button className="bg-blue-600 text-white text-xl font-medium px-10 py-4 rounded-xl shadow-sm hover:opacity-90 transition">
+                Start Planning Free!
+              </button>
+            </Link>
+            <Link to="/about">
+              <button className="bg-white border border-gray-300 text-xl text-black font-medium px-10 py-4 rounded-xl shadow-sm hover:opacity-90 transition">
+                About Us
+              </button>
+            </Link>
+          </>
+        ) : (
+          <>
+            <Link to="/signup">
+              <button className="bg-blue-600 text-white text-xl font-medium px-10 py-4 rounded-xl shadow-sm hover:opacity-90 transition">
+                Start Planning Free!
+              </button>
+            </Link>
+            <Link to="/about">
+              <button className="bg-white border border-gray-300 text-xl text-black font-medium px-10 py-4 rounded-xl shadow-sm hover:opacity-90 transition">
+                About Us
+              </button>
+            </Link>
+          </>
+        )}
       </div>
     </div>
   );
