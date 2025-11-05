@@ -16,6 +16,8 @@ import Iram from "./pages/Iram";
 import Nate from "./pages/Nate";
 import Hongjie from "./pages/Hongjie";
 import UserOnboarding from "./pages/UserOnboarding";
+import About from "./pages/About";
+import ViewItinerary from "./pages/ViewItinerary";
 
 function AppContent() {
   const location = useLocation();
@@ -31,8 +33,10 @@ function AppContent() {
         <Route path="/login" element={<Login />} />
         <Route path="/explore" element={<Explore />} />
         <Route path="/create" element={<CreateItinerary />} />
+        <Route path="/itinerary/:itineraryId" element={<ViewItinerary />} />
         <Route path="/onboarding" element={<Onboarding />} />
         <Route path="/useronboarding" element={<UserOnboarding />} />
+        <Route path="/about" element={<About />} />
         <Route path="/trevor" element={<Trevor />} />
         <Route path="/iram" element={<Iram />} />
         <Route path="/nate" element={<Nate />} />

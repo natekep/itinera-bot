@@ -7,6 +7,8 @@ export default function Navbar() {
   const [session, setSession] = useState<Session | null>(null);
 
   useEffect(() => {
+    if (!supabase) return; // Supabase not configured in dev
+
     supabase.auth.getSession().then(({ data: { session } }) => {
       setSession(session);
     });
@@ -34,7 +36,10 @@ export default function Navbar() {
         <div className="flex items-center space-x-6">
           {session ? (
             <button
-              onClick={async () => await supabase.auth.signOut()}
+              onClick={async () => {
+                if (!supabase) return;
+                await supabase.auth.signOut();
+              }}
               className="text-gray-800 font-medium hover:text-blue-600 transition"
             >
               Logout
