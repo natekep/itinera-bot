@@ -9,6 +9,7 @@ export default function Navbar() {
   useEffect(() => {
     supabase.auth.getSession().then(({ data: { session } }) => {
       setSession(session);
+      console.log(session);
     });
 
     const {
@@ -38,7 +39,7 @@ export default function Navbar() {
                 Create Itinerary
               </Link>
             </li>
-            <li>
+            {/* <li>
               <Link className="hover:text-gray-500" to="/trevor">
                 Trevor
               </Link>
@@ -57,17 +58,22 @@ export default function Navbar() {
               <Link className="hover:text-gray-500" to="/nate">
                 Nate
               </Link>
-            </li>
+            </li> */}
           </ul>
         </div>
         <div className="">
           {session ? (
-            <button
-              onClick={async () => await supabase.auth.signOut()}
-              className="bg-[#81b4fa] text-white px-3 py-2 rounded-lg hover:bg-gray-300"
-            >
-              Logout
-            </button>
+            <div>
+              <span className="mr-5">
+                Welcome, {session.user?.user_metadata.full_name}!
+              </span>
+              <button
+                onClick={async () => await supabase.auth.signOut()}
+                className="bg-[#81b4fa] text-white px-3 py-2 rounded-lg hover:bg-gray-300"
+              >
+                Log Out
+              </button>
+            </div>
           ) : (
             <Link to="/signup">
               <button className="bg-[#81b4fa] text-white px-3 py-2 rounded-lg hover:bg-gray-300">
