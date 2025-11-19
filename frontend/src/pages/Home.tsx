@@ -1,26 +1,39 @@
 import { Link } from "react-router-dom";
+import { supabase } from "../supabaseClient";
+import { useEffect, useState } from "react";
+import type { Session } from "@supabase/supabase-js";
 
 export default function Home() {
+  const [session, setSession] = useState<Session | null>(null);
+  useEffect(() => {
+    supabase.auth.getSession().then(({ data: { session } }) => {
+      setSession(session);
+    });
+
+    const {
+      data: { subscription },
+    } = supabase.auth.onAuthStateChange((_event, session) => {
+      setSession(session);
+    });
+
+    return () => subscription.unsubscribe();
+  }, []);
+
   return (
-    <div className="mt-20 ml-[5%]">
-      <h1 className="text-[#81b4fa] text-9xl">Itinera</h1>
-      <div className="text-xl mt-3">
-        <p className="">
-          Your AI-powered trip planner that builds custom itineraries
+    <div className="h-15/20 grid content-end mx-[5%]">
+      <h1 className="text-white xl:text-8xl text-6xl">
+        Pack your bags, let's go <br></br>somewhere amazing
+      </h1>
+      <div className="flex justify-between mt-[2%]">
+        <p className="text-white text-xl">
+          Hidden gems, breathtaking views, unforgettable adventures-where
+          <br></br>will you go next?
         </p>
-        <p>so you can explore the experiences you actually want</p>
-        <div className="flex gap-3">
-          <Link to="/create">
-            <button className="bg-[#81b4fa] text-white text-xl px-5 py-2 rounded-full border-2 border-[#81b4fa] hover:bg-white hover:text-[#81b4fa] transition-colors duration-300 mt-5">
-              Plan your vacation
-            </button>
-          </Link>
-          <Link to="/about">
-            <button className="bg-white border-2 border-[#81b4fa] text-[#81b4fa] text-xl px-5 py-2 rounded-full hover:bg-[#81b4fa] hover:text-white transition-colors duration-200 mt-5">
-              View Saved Itineraries
-            </button>
-          </Link>
-        </div>
+        <Link to={session ? "/create" : "/signup"}>
+          <button className="bg-white border border-white py-4 px-8 rounded-full hover:bg-transparent hover:text-white">
+            Create your dream trip
+          </button>
+        </Link>
       </div>
     </div>
   );
