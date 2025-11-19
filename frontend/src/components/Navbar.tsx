@@ -34,16 +34,20 @@ export default function Navbar() {
         className={`flex justify-between items-center w-[100%] mx-auto ${navBg} ${navBorder}`}
       >
         <div className="ml-5">
-          <img className="w-25" src={ItineraLogo}></img>
+          <Link to="/">
+            <img className="w-25" src={ItineraLogo}></img>
+          </Link>
         </div>
         <div className="mr-5">
           {session ? (
             <div className="">
-              <button
-                className={`${buttonBg} text-white px-5 py-2 mr-4 rounded-full border border-white hover:bg-white hover:text-black`}
-              >
-                Profile
-              </button>
+              <Link to="/profile">
+                <button
+                  className={`${buttonBg} text-white px-5 py-2 mr-4 rounded-full border border-white hover:bg-white hover:text-black`}
+                >
+                  Profile
+                </button>
+              </Link>
               <button
                 onClick={async () => await supabase.auth.signOut()}
                 className={`${buttonBg} text-white px-3 py-2 rounded-full border border-white hover:bg-white hover:text-black`}

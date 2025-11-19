@@ -20,7 +20,7 @@ export default function Home() {
   }, []);
 
   return (
-    <div className="h-15/20 grid content-end mx-[5%]">
+    <div className="min-h-screen flex flex-col justify-end pb-40 mx-[5%]">
       <h1 className="text-white xl:text-8xl text-6xl">
         Pack your bags, let's go <br></br>somewhere amazing
       </h1>
