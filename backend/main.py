@@ -100,10 +100,20 @@ def read_root():
 
 # ---- google routes
 # Geocode API: convert address to lat/lng
+# Get destination coordinates
 @app.get("/geocode")
 def geocode(address: str):
+    if not address:
+        raise HTTPException(status_code=400, detail="Address is required")
     url = f"https://maps.googleapis.com/maps/api/geocode/json?address={address}&key={GOOGLE_API_KEY}"
-    return requests.get(url).json()
+    res = requests.get(url)
+
+    if res.status_code != 200:
+        raise HTTPException(status_code=500, detail="Failed to reach Google Geo Coding API")
+    data = res.json()
+    if not data.get("results"):
+        raise HTTPException(status_code=404, detail="Address could not be geocoded")
+    return data
 
 # Routes API: get optimized directions between points
 @app.get("/route")
@@ -126,20 +136,94 @@ def route(origin: str, destination: str):
 
 # Places API: find nearby attractions
 @app.get("/places")
-def places(lat: float, lng: float, radius: int = 1500, type: str = "tourist_attraction"):
+def places(lat: float, lng: float, radius: int = 10000, type: str = "tourist_attraction", limit: int = 15):
+    """
+    Generic NearBy Places Search
+    Supports type = airport, lodging, tourist_attraction, restaurants, etc
+    """
+    
     url = "https://places.googleapis.com/v1/places:searchNearby"
     headers = {
         "Content-Type": "application/json",
-        "X-Goog-Api-Key": GOOGLE_API_KEY
+        "X-Goog-Api-Key": GOOGLE_API_KEY,
+        "X-Goog-FieldMask": "places.displayName, places.formattedAddress, places.location, places.rating"
     }
     body = {
         "locationRestriction": {
-            "circle": {"center": {"latitude": lat, "longitude": lng}, "radius": 10000}
+            "circle": {"center": {"latitude": lat, "longitude": lng}, "radius": radius}
         },
         "includedTypes": [type],
-        "maxResultCount": 10
+        "maxResultCount": limit,
+        "rankPreference": "Popularity"
     }
-    return requests.post(url, headers=headers, json=body).json()
+    
+    try:
+        res = requests.post(url, headers=headers, json=body)
+        res.raise_for_status()
+        return res.json()
+    except Exception as e:
+        print("Error fetching /places: ",e)
+        raise HTTPException(status_code=500, detail=str(e))
+
+# Places API: find nearby hotels
+@app.get("/places/hotels")
+def hotels(lat: float, lng: float):
+    url = "https://places.googleapis.com/v1/places:searchNearby"
+
+    headers = {
+        "Content-Type": "application/json",
+        "X-Goog-Api-Key": GOOGLE_API_KEY,
+        "X-Goog-FieldMask": "places.displayName,places.formattedAddress,places.location,places.rating"
+    }
+
+    body = {
+        "locationRestriction": {
+            "circle": {
+                "center": {"latitude": lat, "longitude": lng},
+                "radius": 5000
+            }
+        },
+        "includedTypes": ["lodging"],
+        "maxResultCount": 15,
+        "rankPreference": "POPULARITY"
+    }
+
+    print("\n==== HOTEL REQUEST BODY ====")
+    print(body)
+
+    res = requests.post(url, headers=headers, json=body)
+    print("\n==== HOTEL RAW RESPONSE ====")
+    print(res.text)
+
+    return res.json()
+
+
+# Places API: find flights
+@app.get("/places/airports")
+def airports(lat: float, lng: float):
+    url = "https://places.googleapis.com/v1/places:searchNearby"
+
+    headers = {
+        "Content-Type": "application/json",
+        "X-Goog-Api-Key": GOOGLE_API_KEY,
+        "X-Goog-FieldMask": "places.displayName,places.formattedAddress,places.location"
+    }
+
+    body = {
+        "locationRestriction": {
+            "circle": {
+                "center": {"latitude": lat, "longitude": lng},
+                "radius": 50000   # airports are farther away
+            }
+        },
+        "includedTypes": ["airport"],
+        "maxResultCount": 10,
+        "rankPreference": "POPULARITY"
+    }
+
+    res = requests.post(url, headers=headers, json=body)
+    return res.json()
+
 
 # Distance Matrix API: total travel time/distance
 @app.get("/distance")
