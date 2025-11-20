@@ -123,15 +123,24 @@ export default function ViewItinerary() {
         The JSON object must have a single root key named "trip_itinerary".
 
         The "trip_itinerary" object must follow this structure:
+        - title (string): A catchy title for the trip.
         - destination (string): The name of the primary travel destination.
+        - startDate (string): The start date in "YYYY-MM-DD" format.
+        - endDate (string): The end date in "YYYY-MM-DD" format.
+        - guests (number): The number of guests.
         - days (array of objects): A list of day-by-day plans.
-        - day (number): The sequential day number (e.g., 1, 2, 3).
-        - date (string): The date for this day in "YYYY-MM-DD" format.
-        - theme (string): A brief, descriptive title for the day's plan (e.g., "Arrival and City Exploration").
-        - activities (array of objects): A list of activities for the day.
-            - start_time (string): The start time of the activity (e.g., "09:00", "13:00").
-            - end_time (string): The end time of the activity (e.g., "12:00", "14:00").
-            - description (string): A concise description of the activity.
+          - date (string): The date for this day in "YYYY-MM-DD" format.
+          - activities (array of objects): A list of activities for the day.
+            - name (string): The name of the activity or attraction.
+            - type (string): The type of activity (e.g., "attraction", "restaurant", "transport").
+            - startTime (string): The start time in "YYYY-MM-DDTHH:MM:SS" format.
+            - endTime (string): The end time in "YYYY-MM-DDTHH:MM:SS" format.
+            - location (object):
+              - name (string): The name of the location.
+              - address (string): The approximate address or city.
+            - description (string): A concise description.
+            - cost (number): Estimated cost per person (0 if free).
+            - notes (string): Any additional tips or notes.
 
         User profile: ${summarizeOnboarding(onboarding)}
         `;
@@ -150,7 +159,7 @@ export default function ViewItinerary() {
       const body: ChatRequest = {
         messages: payloadMessages,
         user_id: userId,
-        // people: itinerary.people, // Assuming people is part of itinerary object
+        people: itinerary.guests.toString(),
       };
       const res = await fetch(`${API_BASE}/v1/chat`, {
         method: "POST",

@@ -1,4 +1,4 @@
-import React, { useEffect, useRef } from "react";
+import React, { useEffect, useRef, useState } from "react";
 
 interface MapViewProps {
   coords: { lat: number; lng: number }[];
@@ -9,25 +9,41 @@ const MapView: React.FC<MapViewProps> = ({ coords }) => {
   const mapInstance = useRef<InstanceType<typeof window.google.maps.Map> | null>(null);
   const routePath = useRef<InstanceType<typeof window.google.maps.Polyline> | null>(null);
   const markers = useRef<InstanceType<typeof window.google.maps.Marker>[]>([]);
+  const [isMapLoaded, setIsMapLoaded] = useState(false);
 
   // Initialize the map
   useEffect(() => {
     if (!mapRef.current) return;
 
-    const g = window.google;
-    if (!g || !g.maps) return;
+    const initMap = () => {
+      const g = window.google;
+      if (!g || !g.maps) return;
 
-    const map = new g.maps.Map(mapRef.current, {
-      center: { lat: 39.8283, lng: -98.5795 }, // center of US
-      zoom: 4,
-    });
-    mapInstance.current = map;
+      if (!mapInstance.current && mapRef.current) {
+        const map = new g.maps.Map(mapRef.current, {
+          center: { lat: 39.8283, lng: -98.5795 }, // center of US
+          zoom: 4,
+        });
+        mapInstance.current = map;
+        setIsMapLoaded(true);
+      }
+    };
+
+    if (window.google && window.google.maps) {
+      initMap();
+    } else {
+      window.addEventListener("google-maps-loaded", initMap);
+    }
+
+    return () => {
+      window.removeEventListener("google-maps-loaded", initMap);
+    };
   }, []);
 
   // Update markers & polyline
   useEffect(() => {
     const g = window.google;
-    if (!g || !g.maps || !mapInstance.current) return;
+    if (!g || !g.maps || !mapInstance.current || !isMapLoaded) return;
 
     const map = mapInstance.current;
 

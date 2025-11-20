@@ -7,12 +7,12 @@
     <title>frontend</title>
     <script>
       function initMap(){
-        
+        window.dispatchEvent(new Event("google-maps-loaded"));
       }
     </script>
     <script
     async defer
-    src="https://maps.googleapis.com/maps/api/js?key=%VITE_MAP_CLIENT_KEY%&callback=initMap"
+    src="https://maps.googleapis.com/maps/api/js?key=%VITE_MAP_CLIENT_KEY%&callback=initMap&loading=async"
     ></script>
   </head>
   
