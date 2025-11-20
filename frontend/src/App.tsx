@@ -10,6 +10,7 @@ import Trevor from "./pages/Trevor";
 import Iram from "./pages/Iram";
 import Nate from "./pages/Nate";
 import Hongjie from "./pages/Hongjie";
+import Profile from "./pages/Profile";
 
 export default function App() {
   return (
@@ -23,6 +24,7 @@ export default function App() {
           <Route path="/explore" element={<Explore />} />
           <Route path="/create" element={<CreateItinerary />} />
           <Route path="/onboarding" element={<Onboarding />} />
+          <Route path="/profile" element={<Profile />} />
           <Route path="/trevor" element={<Trevor />} />
           <Route path="/iram" element={<Iram />} />
           <Route path="/nate" element={<Nate />} />

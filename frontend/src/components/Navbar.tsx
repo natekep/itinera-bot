@@ -3,9 +3,11 @@ import { Link } from "react-router-dom";
 import { useEffect, useState } from "react";
 import { supabase } from "../supabaseClient";
 import type { Session } from "@supabase/supabase-js";
+import { FiUser } from "react-icons/fi";
 
 export default function Navbar() {
   const [session, setSession] = useState<Session | null>(null);
+  const [menuOpen, setMenuOpen] = useState<boolean>(false);
   useEffect(() => {
     supabase.auth.getSession().then(({ data: { session } }) => {
       setSession(session);
@@ -63,16 +65,42 @@ export default function Navbar() {
         </div>
         <div className="">
           {session ? (
-            <div>
+            <div className="relative text-left align-center justify-center flex">
               <span className="mr-5">
                 Welcome, {session.user?.user_metadata.full_name}!
               </span>
               <button
-                onClick={async () => await supabase.auth.signOut()}
-                className="bg-[#81b4fa] text-white px-3 py-2 rounded-lg hover:bg-gray-300"
+                onClick={() => setMenuOpen((prev) => !prev)}
+                className="text-black rounded-full cursor-pointer"
+                aria-haspopup="menu"
+                aria-expanded={menuOpen}
               >
-                Log Out
+                <FiUser size={19} />
               </button>
+              {menuOpen && (
+                <div className="absolute right-0 mt-6 w-40 origin-top-right rounded-md bg-white shadow-lg focus:outline-none z-50">
+                  <div className="py-1" role="menu" aria-orientation="vertical">
+                    <Link
+                      to="/profile"
+                      className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
+                      role="menuitem"
+                      onClick={() => setMenuOpen(false)}
+                    >
+                      Profile
+                    </Link>
+                    <button
+                      className="block w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 cursor-pointer"
+                      role="menuitem"
+                      onClick={async () => {
+                        setMenuOpen(false);
+                        await supabase.auth.signOut();
+                      }}
+                    >
+                      Log Out
+                    </button>
+                  </div>
+                </div>
+              )}
             </div>
           ) : (
             <Link to="/signup">
