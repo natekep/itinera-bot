@@ -1,5 +1,6 @@
 import ItineraLogo from "../assets/ItineraLogo.png";
 import { Link, useLocation } from "react-router-dom";
+import { Link } from "react-router-dom";
 import { useEffect, useState } from "react";
 import { supabase } from "../supabaseClient";
 import type { Session } from "@supabase/supabase-js";
@@ -11,6 +12,8 @@ export default function Navbar() {
   const isHome = location.pathname === "/";
 
   useEffect(() => {
+    if (!supabase) return; // Supabase not configured in dev
+
     supabase.auth.getSession().then(({ data: { session } }) => {
       setSession(session);
     });
@@ -74,7 +77,7 @@ export default function Navbar() {
             </div>
           )}
         </div>
-      </nav>
-    </div>
+      </div>
+    </nav>
   );
 }

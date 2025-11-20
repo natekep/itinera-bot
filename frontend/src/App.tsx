@@ -23,6 +23,40 @@ function AppContainer() {
   const bgClass = isHome
     ? "bg-[url('../../src/assets/mountain-bkg-img.jpg')] bg-cover"
     : "bg-[#F2F3F4]";
+import Trevor from "./pages/Trevor";
+import Iram from "./pages/Iram";
+import Nate from "./pages/Nate";
+import Hongjie from "./pages/Hongjie";
+import UserOnboarding from "./pages/UserOnboarding";
+import About from "./pages/About";
+import ViewItinerary from "./pages/ViewItinerary";
+
+function AppContent() {
+  const location = useLocation();
+  const hideNavbarRoutes = ["/login", "/signup", "/useronboarding", "/404"];
+  const shouldHideNavbar = hideNavbarRoutes.includes(location.pathname);
+
+  return (
+    <>
+      {!shouldHideNavbar && <Navbar />}
+      <Routes>
+        <Route path="/" element={<Home />} />
+        <Route path="/signup" element={<SignUp />} />
+        <Route path="/login" element={<Login />} />
+        <Route path="/explore" element={<Explore />} />
+        <Route path="/create" element={<CreateItinerary />} />
+        <Route path="/itinerary/:itineraryId" element={<ViewItinerary />} />
+        <Route path="/onboarding" element={<Onboarding />} />
+        <Route path="/useronboarding" element={<UserOnboarding />} />
+        <Route path="/about" element={<About />} />
+        <Route path="/trevor" element={<Trevor />} />
+        <Route path="/iram" element={<Iram />} />
+        <Route path="/nate" element={<Nate />} />
+        <Route path="/hongjie" element={<Hongjie />} />
+      </Routes>
+    </>
+  );
+}
 
   return (
     <div
@@ -42,6 +76,9 @@ function AppContainer() {
         <Route path="/bookings" element={<Bookings />}></Route>
       </Routes>
     </div>
+    <Router>
+      <AppContent />
+    </Router>
   );
 }
 
