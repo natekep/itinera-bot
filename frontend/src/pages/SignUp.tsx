@@ -34,11 +34,11 @@ export default function SignUp() {
   }
 
   return (
-    <div className="flex flex-col items-center min-h-screen mt-20">
+    <div className="flex flex-col items-center min-h-screen pt-10">
       <img className="w-25" src={ItineraLogo}></img>
       <div className="bg-white border border-gray-300 rounded-xl shadow-lg p-8 w-[100%] max-w-md">
         <h1 className="text-3xl text-center font-semibold">Create Account</h1>
-        <p className="text-gray-500 mt-2">
+        <p className="text-gray-500 mt-2 text-center">
           Start planning your dream adventures today!
         </p>
         <form

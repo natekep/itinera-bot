@@ -199,7 +199,7 @@ export default function CreateItinerary() {
 
   return (
     <div className="flex flex-col min-h-screen bg-gray-50">
-      <div className="flex justify-center mt-20">
+      <div className="flex justify-center mt-10">
         <div className="flex items-center bg-white shadow-md rounded-full px-6 py-3 w-full max-w-4xl border border-gray-200 hover:shadow-lg transition-shadow">
           {/* top search bar UI (optional to wire later) */}
           <div className="flex flex-col flex-1 px-4 border-r border-gray-300">
@@ -271,12 +271,6 @@ export default function CreateItinerary() {
           </button>
         </div>
       </div>
-
-      {error && (
-        <div className="max-w-4xl w-full mx-auto mt-4 text-center text-red-600">
-          {error}
-        </div>
-      )}
     </div>
   );
 }
