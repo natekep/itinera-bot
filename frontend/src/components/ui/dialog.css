@@ -1,0 +1,47 @@
+.dialog-overlay {
+    position: fixed;
+    inset: 0;
+    background: rgba(0, 0, 0, 0.45);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 50;
+  }
+  
+  .dialog-container {
+    background: white;
+    border-radius: 12px;
+    padding: 24px;
+    max-width: 480px;
+    width: 90%;
+    box-shadow: 0 10px 35px rgba(0, 0, 0, 0.25);
+    animation: fadeIn 0.25s ease-out;
+  }
+  
+  .dialog-header {
+    margin-bottom: 12px;
+  }
+  
+  .dialog-title {
+    font-size: 1.25rem;
+    font-weight: 700;
+    margin-bottom: 4px;
+  }
+  
+  .dialog-description {
+    font-size: 0.875rem;
+    color: #555;
+  }
+  
+  /* Smooth fade animation */
+  @keyframes fadeIn {
+    from {
+      opacity: 0;
+      transform: translateY(12px);
+    }
+    to {
+      opacity: 1;
+      transform: translateY(0);
+    }
+  }
+  

@@ -61,7 +61,7 @@ export default function UserOnboarding() {
       alert("Something went wrong — please try again!");
     } else {
       alert("Onboarding info saved successfully!");
-      navigate("/createitinerary");
+      navigate("/create");
     }
   }
 
