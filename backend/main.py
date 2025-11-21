@@ -7,6 +7,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
 from typing import Optional, Dict
 from supabase import create_client, Client
+
 # from openai import OpenAI  # Changed import
 from dotenv import load_dotenv
 from openai import OpenAI
@@ -20,13 +21,10 @@ app = FastAPI()
 # CORS (Cross-Origin Resource Sharing) prohibits unauthorized websites, endpoints, or servers from accessing the API
 
 # Services from this origin can access the api
-origins = [
-    "http://localhost:5173",
-    "https://itinera-bot.web.app"
-]
+origins = ["http://localhost:5173", "https://itinera-bot.web.app"]
 
 app.add_middleware(
-    CORSMiddleware, 
+    CORSMiddleware,
     allow_origins=origins,
     allow_credentials=True,
     allow_methods=["*"],
@@ -46,6 +44,7 @@ client = OpenAI(api_key=os.getenv("OPENAI_API_KEY"))
 def read_root():
     return {"message": "FastAPI backend running!"}
 
+
 # Itinerary Generation
 class TripDetails(BaseModel):
     user_id: str
@@ -54,13 +53,13 @@ class TripDetails(BaseModel):
     end_date: str
     num_guests: int
 
+
 # STEP 1: Get user travel preferences from supabase (user onboarding)
 def get_user_onboarding_profile(user_id: str):
     print(f"[STEP 1] Fetching user profile for user_id={user_id}")
     try:
         response = (
-            supabase
-            .from_("user_onboarding")
+            supabase.from_("user_onboarding")
             .select("*")
             .eq("user_id", user_id)
             .single()
@@ -70,12 +69,15 @@ def get_user_onboarding_profile(user_id: str):
             print("[STEP 1] User profile found:", response.data)
             return response.data
         else:
-            raise HTTPException(status_code=404, detail="User onboarding profile not found.")
+            raise HTTPException(
+                status_code=404, detail="User onboarding profile not found."
+            )
     except Exception as e:
         print("Supabase Error:", e)
         raise HTTPException(status_code=500, detail="Error fetching user profile.")
-    
-# STEP 2: Get the ticketmaster events for ticketed events 
+
+
+# STEP 2: Get the ticketmaster events for ticketed events
 def get_ticketmaster_events(destination: str, start_date: str, end_date: str):
     url = "https://app.ticketmaster.com/discovery/v2/events.json"
     params = {
@@ -88,9 +90,11 @@ def get_ticketmaster_events(destination: str, start_date: str, end_date: str):
         "startDateTime": f"{start_date}T00:00:00Z",
         "endDateTime": f"{end_date}T23:59:59Z",
         "size": 10,
-        "sort": "date,asc"
+        "sort": "date,asc",
     }
-    print(f"[STEP 2] Fetching Ticketmaster events for {destination}, {start_date} to {end_date}")
+    print(
+        f"[STEP 2] Fetching Ticketmaster events for {destination}, {start_date} to {end_date}"
+    )
     print("Ticketmaster request URL params:", params)
 
     response = requests.get(url, params=params)
@@ -98,7 +102,7 @@ def get_ticketmaster_events(destination: str, start_date: str, end_date: str):
     if response.status_code != 200:
         raise HTTPException(
             status_code=response.status_code,
-            detail=f"Ticketmaster API error: {response.text}"
+            detail=f"Ticketmaster API error: {response.text}",
         )
 
     data = response.json()
@@ -108,23 +112,39 @@ def get_ticketmaster_events(destination: str, start_date: str, end_date: str):
     # Normalize results
     events = []
     for e in raw_events:
-        events.append({
-            "name": e.get("name"),
-            "date": e.get("dates", {}).get("start", {}).get("localDate"),
-            "time": e.get("dates", {}).get("start", {}).get("localTime"),
-            "timezone": e.get("dates", {}).get("timezone"),
-            "type": e.get("classifications", [{}])[0].get("segment", {}).get("name"),
-            "genre": e.get("classifications", [{}])[0].get("genre", {}).get("name"),
-            "subGenre": e.get("classifications", [{}])[0].get("subGenre", {}).get("name"),
-            "url": e.get("url"),
-            "image": e.get("images", [{}])[0].get("url"),
-            "venue": e.get("_embedded", {}).get("venues", [{}])[0].get("name"),
-            "address": e.get("_embedded", {}).get("venues", [{}])[0].get("address", {}).get("line1"),
-            "city": e.get("_embedded", {}).get("venues", [{}])[0].get("city", {}).get("name"),
-            "state": e.get("_embedded", {}).get("venues", [{}])[0].get("state", {}).get("name"),
-        })
+        events.append(
+            {
+                "name": e.get("name"),
+                "date": e.get("dates", {}).get("start", {}).get("localDate"),
+                "time": e.get("dates", {}).get("start", {}).get("localTime"),
+                "timezone": e.get("dates", {}).get("timezone"),
+                "type": e.get("classifications", [{}])[0]
+                .get("segment", {})
+                .get("name"),
+                "genre": e.get("classifications", [{}])[0].get("genre", {}).get("name"),
+                "subGenre": e.get("classifications", [{}])[0]
+                .get("subGenre", {})
+                .get("name"),
+                "url": e.get("url"),
+                "image": e.get("images", [{}])[0].get("url"),
+                "venue": e.get("_embedded", {}).get("venues", [{}])[0].get("name"),
+                "address": e.get("_embedded", {})
+                .get("venues", [{}])[0]
+                .get("address", {})
+                .get("line1"),
+                "city": e.get("_embedded", {})
+                .get("venues", [{}])[0]
+                .get("city", {})
+                .get("name"),
+                "state": e.get("_embedded", {})
+                .get("venues", [{}])[0]
+                .get("state", {})
+                .get("name"),
+            }
+        )
 
     return events
+
 
 # STEP 3: Get the best places and food spots using Google Places API
 INTEREST_KEYWORDS = {
@@ -146,11 +166,13 @@ INTEREST_KEYWORDS = {
     "brunch": ["brunch restaurants"],
 }
 
+
 def parse_interests(user_profile):
     raw = user_profile.get("interests", "")
     interests = [i.strip().lower() for i in raw.split(",") if i.strip()]
     print(f"FORMATTED_INTERESTS: {interests}")
     return interests
+
 
 def normalize_google_place(place):
     return {
@@ -163,6 +185,7 @@ def normalize_google_place(place):
         "opening_hours": place.get("opening_hours", {}),
         "place_id": place.get("place_id"),
     }
+
 
 def search_places_by_interest(destination: str, interest: str):
     keywords = INTEREST_KEYWORDS.get(interest, [interest])
@@ -191,10 +214,11 @@ def search_places_by_interest(destination: str, interest: str):
     print(f"[STEP 3] Google Places found {len(unique)} unique places")
     return list(unique)
 
+
 def get_google_food_general(destination: str):
     """Get top restaurants, cafes, and popular food places."""
     url = "https://maps.googleapis.com/maps/api/place/textsearch/json"
-    
+
     params = {
         "query": f"best restaurants in {destination}",
         "key": os.getenv("GOOGLE_PLACES_API_KEY"),
@@ -208,6 +232,7 @@ def get_google_food_general(destination: str):
     results = response.json().get("results", [])
     print(results)
     return [normalize_google_place(p) for p in results][:20]
+
 
 def get_google_places_personalized(destination: str, user_profile):
     print(f"[STEP 3] Fetching Google Places for destination={destination}")
@@ -230,14 +255,13 @@ def get_google_places_personalized(destination: str, user_profile):
     unique = {p["place_id"]: p for p in all_results if p["place_id"]}.values()
     return list(unique)
 
-    
 
 def build_llm_payload(user_profile, trip, ticket_events, interest_places):
     return {
         "trip": trip,
         "user_profile": user_profile,
         "ticketed_events": ticket_events,
-        "interest_places": interest_places,  
+        "interest_places": interest_places,
     }
 
 
@@ -310,18 +334,21 @@ def build_itinerary_prompt(payload):
 
     return prompt
 
+
 def generate_itinerary_with_llm(payload):
     prompt = build_itinerary_prompt(payload)
     print("\n[STEP 5] Sending itinerary prompt to LLM...")
     print("Prompt preview (first 600 chars):")
     print(prompt[:200])
 
-
     try:
         response = client.chat.completions.create(
             model="gpt-4o-mini",
             messages=[
-                {"role": "system", "content": "You are an expert itinerary-building AI."},
+                {
+                    "role": "system",
+                    "content": "You are an expert itinerary-building AI.",
+                },
                 {"role": "user", "content": prompt},
             ],
             response_format={"type": "json_object"},
@@ -337,11 +364,9 @@ def generate_itinerary_with_llm(payload):
         print("LLM Error:", e)
         raise HTTPException(status_code=500, detail="Error generating itinerary")
 
-    
 
 @app.post("/generate-itinerary")
 def generate_itinerary(req: TripDetails):
-
     print("\n========== GENERATE ITINERARY STARTED ==========")
     print("Incoming request:", req)
 
@@ -350,15 +375,12 @@ def generate_itinerary(req: TripDetails):
 
     # Step 2: Fetch ticketed events
     ticketmaster_events = get_ticketmaster_events(
-        destination=req.destination,
-        start_date=req.start_date,
-        end_date=req.end_date
+        destination=req.destination, start_date=req.start_date, end_date=req.end_date
     )
 
     # Step 3: Personalized Google Places (food + attractions)
     interest_places = get_google_places_personalized(
-        destination=req.destination,
-        user_profile=user_profile
+        destination=req.destination, user_profile=user_profile
     )
 
     # Step 4: Build simple LLM payload (no sorting, no grouping)
@@ -379,16 +401,15 @@ def generate_itinerary(req: TripDetails):
 
     print("========== ITINERARY SUCCESSFULLY GENERATED ==========\n")
 
-    return {
-        "status": "success",
-        "itinerary": itinerary
-    }
+    return {"status": "success", "itinerary": itinerary}
+
 
 # ITINERAY REGENERATION
 from fastapi import FastAPI, HTTPException
 from pydantic import BaseModel
 from openai import OpenAI
 import json
+
 
 class RegenerateRequest(BaseModel):
     original_itinerary: dict
@@ -426,11 +447,13 @@ def regenerate_itinerary(req: RegenerateRequest):
         if not new_places:
             new_places = get_google_places_personalized(
                 destination=destination,
-                user_profile={}  # user_profile not necessary for regen fallback
+                user_profile={},  # user_profile not necessary for regen fallback
             )
 
         # Deduplicate by place_id
-        new_places = list({p["place_id"]: p for p in new_places if p.get("place_id")}.values())
+        new_places = list(
+            {p["place_id"]: p for p in new_places if p.get("place_id")}.values()
+        )
 
         print(f"Google returned {len(new_places)} new real places for regeneration.")
 
@@ -485,10 +508,13 @@ def regenerate_itinerary(req: RegenerateRequest):
         response = client.chat.completions.create(
             model="gpt-4o-mini",
             messages=[
-                {"role": "system", "content": "You are a professional itinerary builder AI."},
-                {"role": "user", "content": prompt}
+                {
+                    "role": "system",
+                    "content": "You are a professional itinerary builder AI.",
+                },
+                {"role": "user", "content": prompt},
             ],
-            response_format={"type": "json_object"}
+            response_format={"type": "json_object"},
         )
 
         updated = json.loads(response.choices[0].message.content)
@@ -498,6 +524,7 @@ def regenerate_itinerary(req: RegenerateRequest):
     except Exception as e:
         print("Regeneration Error:", e)
         raise HTTPException(status_code=500, detail="Regeneration failed")
+
 
 # CHAT MESSENGING
 @app.post("/chat")
@@ -509,11 +536,13 @@ def chat_endpoint(payload: dict):
         response = client.chat.completions.create(
             model="gpt-4o-mini",
             messages=[
-                {"role": "system", "content":
-                "You are a travel assistant. Your replies must be VERY short (1 sentence max). \
+                {
+                    "role": "system",
+                    "content": "You are a travel assistant. Your replies must be VERY short (1 sentence max). \
                 Never give explanations. Never provide full itineraries. \
                 Only acknowledge the user's request in a helpful, simple sentence like \
-                'Got it — I’ll add that to the itinerary.'"},
+                'Got it — I’ll add that to the itinerary.'",
+                },
                 *messages,
             ],
         )
@@ -549,7 +578,7 @@ def extract_keywords_from_query(user_query: str):
     response = client.chat.completions.create(
         model="gpt-4o-mini",
         messages=[{"role": "user", "content": prompt}],
-        response_format={"type": "json_object"}
+        response_format={"type": "json_object"},
     )
 
     try:
@@ -558,48 +587,157 @@ def extract_keywords_from_query(user_query: str):
     except:
         return []
 
+
 @app.post("/save-itinerary")
 def save_itinerary(payload: dict):
     user_id = payload["user_id"]
     itinerary = payload["itinerary"]
-    
+
     destination = itinerary["destination"]
     days = itinerary["days"]
     num_guests = payload["num_guests"]
 
     # 1. Create itinerary row
-    result = supabase.table("itineraries").insert({
-        "user_id": user_id,
-        "destination": destination,
-        "start_date": days[0]["date"],
-        "end_date": days[-1]["date"],
-        "num_guests": num_guests,
-        "title": f"Trip to {destination}"
-    }).execute()
+    result = (
+        supabase.table("itineraries")
+        .insert(
+            {
+                "user_id": user_id,
+                "destination": destination,
+                "start_date": days[0]["date"],
+                "end_date": days[-1]["date"],
+                "num_guests": num_guests,
+                "title": f"Trip to {destination}",
+            }
+        )
+        .execute()
+    )
 
     itinerary_id = result.data[0]["id"]
 
     # 2. Insert each day
     day_rows = []
     for i, day in enumerate(days):
-        response = supabase.table("itinerary_days").insert({
-            "itinerary_id": itinerary_id,
-            "day_number": i + 1,
-            "date": day["date"]
-        }).execute()
+        response = (
+            supabase.table("itinerary_days")
+            .insert(
+                {"itinerary_id": itinerary_id, "day_number": i + 1, "date": day["date"]}
+            )
+            .execute()
+        )
         day_rows.append(response.data[0])
 
     # 3. Insert all activities
     for i, day in enumerate(days):
         day_id = day_rows[i]["id"]
         for activity in day["activities"]:
-            supabase.table("activities").insert({
-                "day_id": day_id,
-                "name": activity["name"],
-                "description": activity["description"],
-                "category": activity.get("source", "General"),
-                "location_name": activity.get("location_name"),
-                "notes": activity.get("explanation"),
-            }).execute()
+            supabase.table("activities").insert(
+                {
+                    "day_id": day_id,
+                    "name": activity["name"],
+                    "description": activity["description"],
+                    "category": activity.get("source", "General"),
+                    "location_name": activity.get("location_name"),
+                    "notes": activity.get("explanation"),
+                }
+            ).execute()
 
     return {"status": "success", "itinerary_id": itinerary_id}
+
+
+# Flights: find flights between points
+@app.get("/flights/search")
+def flights(origin: str, destination: str, departure_date: str, return_date: str):
+    url = "https://api.duffel.com/air/offer_requests?return_offers=true&supplier_timeout=10000"
+    headers = {
+        "Accept-Encoding": "gzip",
+        "Accept": "application/json",
+        "Content-Type": "application/json",
+        "Duffel-Version": "v2",
+        "Authorization": "Bearer " + os.getenv("DUFFEL_API_KEY"),
+    }
+    body = {
+        "data": {
+            "slices": [
+                {
+                    "origin": origin,
+                    "destination": destination,
+                    "departure_date": departure_date,
+                },
+                {
+                    "origin": destination,
+                    "destination": origin,
+                    "departure_date": return_date,
+                },
+            ],
+            "passengers": [
+                {
+                    "type": "adult",
+                }
+            ],
+            "cabin_class": "economy",
+        }
+    }
+    response = requests.post(url, headers=headers, json=body)
+    return response.json()
+
+
+# Airports: find nearby airports using given coordinates
+@app.get("/places/airports")
+def airports(lat: float, lng: float):
+    url = f"https://api.duffel.com/places/suggestions?lat={lat}&lng={lng}&rad=100000"
+
+    headers = {
+        "Accept-Encoding": "gzip",
+        "Accept": "application/json",
+        "Content-Type": "application/json",
+        "Duffel-Version": "v2",
+        "Authorization": "Bearer " + os.getenv("DUFFEL_API_KEY"),
+    }
+
+    res = requests.get(url, headers=headers)
+    return res.json()
+
+
+# Places API: find nearby hotels
+@app.get("/places/hotels")
+def hotels(lat: float, lng: float):
+    url = "https://places.googleapis.com/v1/places:searchNearby"
+
+    headers = {
+        "Content-Type": "application/json",
+        "X-Goog-Api-Key": os.getenv("GOOGLE_API_KEY"),
+        "X-Goog-FieldMask": "places.displayName,places.formattedAddress,places.location,places.rating",
+    }
+
+    body = {
+        "locationRestriction": {
+            "circle": {"center": {"latitude": lat, "longitude": lng}, "radius": 5000}
+        },
+        "includedTypes": ["lodging"],
+        "maxResultCount": 15,
+        "rankPreference": "POPULARITY",
+    }
+
+    res = requests.post(url, headers=headers, json=body)
+
+    return res.json()
+
+
+# Geocode API: convert address to lat/lng
+# Get destination coordinates
+@app.get("/geocode")
+def geocode(address: str):
+    if not address:
+        raise HTTPException(status_code=400, detail="Address is required")
+    url = f"https://maps.googleapis.com/maps/api/geocode/json?address={address}&key={os.getenv('GOOGLE_API_KEY')}"
+    res = requests.get(url)
+
+    if res.status_code != 200:
+        raise HTTPException(
+            status_code=500, detail="Failed to reach Google Geo Coding API"
+        )
+    data = res.json()
+    if not data.get("results"):
+        raise HTTPException(status_code=404, detail="Address could not be geocoded")
+    return data
