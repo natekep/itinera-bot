@@ -24,11 +24,10 @@ export default function CreateItinerary() {
   );
 
   const [regenLoading, setRegenLoading] = useState(false);
+  const [saveLoading, setSaveLoading] = useState(false);
   const [chatMessages, setChatMessages] = useState<
     { role: string; content: string }[]
   >([]);
-
-  const allApproved = Object.values(approvals).every((v) => v === true);
 
   type GooglePlacesAutocompleteResponse = {
     suggestions: {
@@ -87,7 +86,6 @@ export default function CreateItinerary() {
     try {
       const response = await fetch("http://localhost:8000/generate-itinerary", {
         method: "POST",
-        credentials:  "include",
         headers: {
           "Content-Type": "application/json",
         },
@@ -214,6 +212,32 @@ export default function CreateItinerary() {
     }
   };
 
+  // Filter itinerary to remove rejected activities
+  const getFilteredItinerary = () => {
+    if (!itinerary) return null;
+
+    const filteredDays = itinerary.days.map((day: any, dayIndex: number) => {
+      const filteredActivities = day.activities.filter(
+        (_: any, activityIndex: number) => {
+          const key = `${dayIndex}-${activityIndex}`;
+          const decision = approvals[key];
+
+          // keep if YES or not selected
+          return (
+            decision === true || decision === null || decision === undefined
+          );
+        }
+      );
+
+      return {
+        ...day,
+        activities: filteredActivities,
+      };
+    });
+
+    return { ...itinerary, days: filteredDays };
+  };
+
   const handleSaveItinerary = async () => {
     const {
       data: { user },
@@ -222,13 +246,17 @@ export default function CreateItinerary() {
     if (!user) return alert("You must be logged in.");
 
     try {
+      setSaveLoading(true);
+
+      const filteredItinerary = getFilteredItinerary(); // <-- NEW
+
       const response = await fetch("http://localhost:8000/save-itinerary", {
         method: "POST",
         credentials: "include",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           user_id: user.id,
-          itinerary: itinerary,
+          itinerary: filteredItinerary, // <-- send filtered version
           num_guests: numGuests,
         }),
       });
@@ -243,11 +271,13 @@ export default function CreateItinerary() {
     } catch (err) {
       console.error(err);
       alert("Error saving itinerary.");
+    } finally {
+      setSaveLoading(false);
     }
   };
 
   return (
-    <div className="flex flex-col min-h-screen bg-gray-50">
+    <div className="flex flex-col min-h-screen bg-gradient-to-r from-[#81b4fa] to-[#4b8ce8]">
       <div className="flex justify-center mt-10">
         <div className="relative w-full mx-10">
           <div className="flex items-center bg-white shadow-md rounded-full px-6 py-3 border border-gray-200 hover:shadow-lg transition-shadow">
@@ -266,7 +296,7 @@ export default function CreateItinerary() {
 
             <div className="flex flex-col flex-1 px-4 border-r border-gray-300">
               <label className="text-sm font-semibold text-gray-800">
-                Check in
+                Trip Start Date
               </label>
               <DatePicker
                 selected={checkInDate}
@@ -279,7 +309,7 @@ export default function CreateItinerary() {
 
             <div className="flex flex-col flex-1 px-4 border-r border-gray-300">
               <label className="text-sm font-semibold text-gray-800">
-                Check out
+                Trip End Date
               </label>
               <DatePicker
                 selected={checkOutDate}
@@ -405,6 +435,7 @@ export default function CreateItinerary() {
                     </div>
                   ) : (
                     <ItineraryTabs
+                      key={JSON.stringify(itinerary)}
                       itinerary={itinerary}
                       onApprovalChange={(data) => setApprovals(data)}
                     />
@@ -428,17 +459,17 @@ export default function CreateItinerary() {
                       Clear & Restart
                     </button>
                     <button
-                      disabled={
-                        !Object.values(approvals).every((v) => v === true)
-                      }
                       onClick={handleSaveItinerary}
-                      className={`px-6 py-2 rounded-full text-sm text-white ${
-                        Object.values(approvals).every((v) => v === true)
-                          ? "bg-[#007BCE] hover:bg-blue-500"
-                          : "bg-gray-300 cursor-not-allowed"
+                      disabled={saveLoading}
+                      className={`px-6 py-2 rounded-full text-sm text-white transition ${
+                        saveLoading
+                          ? "bg-gray-400 cursor-not-allowed"
+                          : Object.values(approvals).some((v) => v === false)
+                          ? "bg-yellow-500 hover:bg-yellow-600"
+                          : "bg-[#007BCE] hover:bg-blue-500"
                       }`}
                     >
-                      Save & Continue
+                      {saveLoading ? "Saving…" : "Save & Continue"}
                     </button>
                   </div>
                 </div>

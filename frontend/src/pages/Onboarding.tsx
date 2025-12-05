@@ -59,11 +59,31 @@ export default function UserOnboarding() {
   const [budgetRange, setBudgetRange] = useState("");
 
   const accessibilityOptions = [
-    { key: "wheelchair_access", label: "Wheelchair Access", icon: <Armchair className="h-4 w-4 text-[#4b8ce8]" /> },
-    { key: "step_free", label: "Step-Free Routes", icon: <Footprints className="h-4 w-4 text-[#4b8ce8]" /> },
-    { key: "quiet_spaces", label: "Quiet Spaces", icon: <Volume2 className="h-4 w-4 text-[#4b8ce8]" /> },
-    { key: "service_animal", label: "Service Animal Friendly", icon: <Dog className="h-4 w-4 text-[#4b8ce8]" /> },
-    { key: "captions", label: "Audio/Visual Captions", icon: <Captions className="h-4 w-4 text-[#4b8ce8]" /> },
+    {
+      key: "wheelchair_access",
+      label: "Wheelchair Access",
+      icon: <Armchair className="h-4 w-4 text-[#4b8ce8]" />,
+    },
+    {
+      key: "step_free",
+      label: "Step-Free Routes",
+      icon: <Footprints className="h-4 w-4 text-[#4b8ce8]" />,
+    },
+    {
+      key: "quiet_spaces",
+      label: "Quiet Spaces",
+      icon: <Volume2 className="h-4 w-4 text-[#4b8ce8]" />,
+    },
+    {
+      key: "service_animal",
+      label: "Service Animal Friendly",
+      icon: <Dog className="h-4 w-4 text-[#4b8ce8]" />,
+    },
+    {
+      key: "captions",
+      label: "Audio/Visual Captions",
+      icon: <Captions className="h-4 w-4 text-[#4b8ce8]" />,
+    },
   ];
 
   const isFormValid =
@@ -83,7 +103,10 @@ export default function UserOnboarding() {
   };
 
   const addCustomInterest = () => {
-    if (customInterest.trim() && !selectedInterests.includes(customInterest.trim())) {
+    if (
+      customInterest.trim() &&
+      !selectedInterests.includes(customInterest.trim())
+    ) {
       setSelectedInterests((prev) => [...prev, customInterest.trim()]);
       setCustomInterest("");
     }
@@ -139,7 +162,7 @@ export default function UserOnboarding() {
       alert("Onboarding info saved successfully!");
       navigate("/create");
     }
-    
+
     setIsSubmitting(false);
   }
 
@@ -156,7 +179,8 @@ export default function UserOnboarding() {
             Welcome to Itinera
           </h1>
           <p className="text-lg text-white/90">
-            Tell us about yourself so we can craft the perfect travel experience for you
+            Tell us about yourself so we can craft the perfect travel experience
+            for you
           </p>
         </div>
       </div>
@@ -170,12 +194,16 @@ export default function UserOnboarding() {
               <User className="h-5 w-5 text-[#4b8ce8]" />
               <h2 className="text-xl font-semibold">About You</h2>
             </div>
-            <p className="mb-6 text-sm text-gray-600">Basic info to personalize your experience</p>
-            
+            <p className="mb-6 text-sm text-gray-600">
+              Basic info to personalize your experience
+            </p>
+
             <div className="space-y-4">
               <div className="grid gap-4 sm:grid-cols-2">
                 <div>
-                  <label className="mb-2 block text-sm font-medium text-gray-700">Age Range</label>
+                  <label className="mb-2 block text-sm font-medium text-gray-700">
+                    Age Range
+                  </label>
                   <select
                     value={ageRange}
                     onChange={(e) => setAgeRange(e.target.value)}
@@ -191,7 +219,9 @@ export default function UserOnboarding() {
                   </select>
                 </div>
                 <div>
-                  <label className="mb-2 block text-sm font-medium text-gray-700">Gender</label>
+                  <label className="mb-2 block text-sm font-medium text-gray-700">
+                    Gender
+                  </label>
                   <select
                     value={gender}
                     onChange={(e) => setGender(e.target.value)}
@@ -225,11 +255,15 @@ export default function UserOnboarding() {
               <Compass className="h-5 w-5 text-[#4b8ce8]" />
               <h2 className="text-xl font-semibold">Travel Style</h2>
             </div>
-            <p className="mb-6 text-sm text-gray-600">How do you like to explore?</p>
-            
+            <p className="mb-6 text-sm text-gray-600">
+              How do you like to explore?
+            </p>
+
             <div className="grid gap-4 sm:grid-cols-2">
               <div>
-                <label className="mb-2 block text-sm font-medium text-gray-700">Preferred Pace</label>
+                <label className="mb-2 block text-sm font-medium text-gray-700">
+                  Preferred Pace
+                </label>
                 <select
                   value={preferredPace}
                   onChange={(e) => setPreferredPace(e.target.value)}
@@ -266,12 +300,16 @@ export default function UserOnboarding() {
               <Heart className="h-5 w-5 text-[#4b8ce8]" />
               <h2 className="text-xl font-semibold">Your Interests</h2>
             </div>
-            <p className="mb-6 text-sm text-gray-600">What makes a trip memorable for you?</p>
-            
+            <p className="mb-6 text-sm text-gray-600">
+              What makes a trip memorable for you?
+            </p>
+
             {/* Selected interests display */}
             {selectedInterests.length > 0 && (
               <div className="mb-4">
-                <p className="mb-2 text-sm font-medium text-gray-700">Selected interests:</p>
+                <p className="mb-2 text-sm font-medium text-gray-700">
+                  Selected interests:
+                </p>
                 <div className="flex flex-wrap gap-2">
                   {selectedInterests.map((interest) => (
                     <span
@@ -294,7 +332,9 @@ export default function UserOnboarding() {
 
             {/* Suggested interests bubbles */}
             <div className="mb-4">
-              <p className="mb-2 text-sm font-medium text-gray-700">Popular interests (click to add):</p>
+              <p className="mb-2 text-sm font-medium text-gray-700">
+                Popular interests (click to add):
+              </p>
               <div className="flex flex-wrap gap-2">
                 {INTEREST_SUGGESTIONS.map((interest) => (
                   <button
@@ -321,7 +361,7 @@ export default function UserOnboarding() {
                 value={customInterest}
                 onChange={(e) => setCustomInterest(e.target.value)}
                 onKeyPress={(e) => {
-                  if (e.key === 'Enter') {
+                  if (e.key === "Enter") {
                     e.preventDefault();
                     addCustomInterest();
                   }
@@ -344,8 +384,10 @@ export default function UserOnboarding() {
               <Utensils className="h-5 w-5 text-[#4b8ce8]" />
               <h2 className="text-xl font-semibold">Dietary Preferences</h2>
             </div>
-            <p className="mb-6 text-sm text-gray-600">Help us recommend the best dining spots</p>
-            
+            <p className="mb-6 text-sm text-gray-600">
+              Help us recommend the best dining spots
+            </p>
+
             <input
               type="text"
               placeholder="e.g., Vegetarian, Gluten-Free, Halal"
@@ -353,7 +395,9 @@ export default function UserOnboarding() {
               onChange={(e) => setDietaryRestrictions(e.target.value)}
               className="w-full rounded-lg border border-gray-300 p-2.5 focus:border-[#4b8ce8] focus:outline-none focus:ring-2 focus:ring-[#81b4fa]/50"
             />
-            <p className="mt-2 text-sm text-gray-500">Separate multiple restrictions with commas. Leave blank if none.</p>
+            <p className="mt-2 text-sm text-gray-500">
+              Separate multiple restrictions with commas. Leave blank if none.
+            </p>
           </div>
 
           {/* Accessibility Section */}
@@ -363,7 +407,7 @@ export default function UserOnboarding() {
               <h2 className="text-xl font-semibold">Accessibility Needs</h2>
             </div>
             <p className="mb-6 text-sm text-gray-600">Select all that apply</p>
-            
+
             <div className="space-y-3">
               {accessibilityOptions.map((option) => (
                 <label
@@ -372,7 +416,9 @@ export default function UserOnboarding() {
                 >
                   <input
                     type="checkbox"
-                    checked={accessibility[option.key as keyof typeof accessibility]}
+                    checked={
+                      accessibility[option.key as keyof typeof accessibility]
+                    }
                     onChange={(e) =>
                       setAccessibility((prev) => ({
                         ...prev,
@@ -396,8 +442,10 @@ export default function UserOnboarding() {
               <Wallet className="h-5 w-5 text-[#4b8ce8]" />
               <h2 className="text-xl font-semibold">Budget</h2>
             </div>
-            <p className="mb-6 text-sm text-gray-600">Your daily spending range</p>
-            
+            <p className="mb-6 text-sm text-gray-600">
+              Your daily spending range
+            </p>
+
             <select
               value={budgetRange}
               onChange={(e) => setBudgetRange(e.target.value)}
