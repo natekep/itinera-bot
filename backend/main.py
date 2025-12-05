@@ -626,18 +626,47 @@ def save_itinerary(payload: dict):
             .execute()
         )
         day_rows.append(response.data[0])
-
+        
+    GOOGLE_KEY = os.getenv("GOOGLE_API_KEY")
+    
     # 3. Insert all activities
     for i, day in enumerate(days):
         day_id = day_rows[i]["id"]
         for activity in day["activities"]:
+            location_name = activity.get("location_name") or activity["name"]
+           
+            # --- NEW: geocode the location name ---
+            lat, lng, place_id = None, None, None
+            formatted_address = None
+
+            try:
+                #print("GEOCODING:", location_name)
+                geo = requests.get(
+                    "https://maps.googleapis.com/maps/api/geocode/json",
+                    params={"address": f"{location_name}, {destination}", "key": GOOGLE_KEY}
+                ).json()
+                #print("GEOCODE RESPONSE:", geo)
+                if geo.get("results"):
+                    result = geo["results"][0]
+                    loc = result["geometry"]["location"]
+                    lat = loc.get("lat")
+                    lng = loc.get("lng")
+                    place_id = result.get("place_id")
+                    formatted_address = result.get("formatted_address")
+            except Exception as e:
+                print("Geocode error: ", e)  
+            
             supabase.table("activities").insert(
                 {
                     "day_id": day_id,
                     "name": activity["name"],
                     "description": activity["description"],
                     "category": activity.get("source", "General"),
-                    "location_name": activity.get("location_name"),
+                    "location_name": location_name,
+                    "location_address": formatted_address,
+                    "latitude": lat,
+                    "longitude": lng,
+                    "place_id": place_id,
                     "notes": activity.get("explanation"),
                 }
             ).execute()

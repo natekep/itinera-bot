@@ -87,6 +87,7 @@ export default function CreateItinerary() {
     try {
       const response = await fetch("http://localhost:8000/generate-itinerary", {
         method: "POST",
+        credentials:  "include",
         headers: {
           "Content-Type": "application/json",
         },
@@ -128,6 +129,7 @@ export default function CreateItinerary() {
         "http://localhost:8000/regenerate-itinerary",
         {
           method: "POST",
+          credentials: "include",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({
             original_itinerary: itinerary,
@@ -191,6 +193,7 @@ export default function CreateItinerary() {
     try {
       const response = await fetch("http://localhost:8000/chat", {
         method: "POST",
+        credentials: "include",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           messages: [...chatMessages, { role: "user", content: userMessage }],
@@ -221,6 +224,7 @@ export default function CreateItinerary() {
     try {
       const response = await fetch("http://localhost:8000/save-itinerary", {
         method: "POST",
+        credentials: "include",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           user_id: user.id,
@@ -234,7 +238,7 @@ export default function CreateItinerary() {
       if (data.status === "success") {
         console.log("Saved!", data);
         alert("Itinerary saved successfully!");
-        navigate("/bookings");
+        navigate(`/bookings/${data.itinerary_id}`);
       }
     } catch (err) {
       console.error(err);

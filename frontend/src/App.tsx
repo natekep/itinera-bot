@@ -39,7 +39,7 @@ function AppContainer() {
         <Route path="/create" element={<CreateItinerary />} />
         <Route path="/onboarding" element={<Onboarding />} />
         <Route path="/profile" element={<Profile />}></Route>
-        <Route path="/bookings" element={<Bookings />}></Route>
+        <Route path="/bookings/:itinerary_id" element={<Bookings />}></Route>
       </Routes>
     </div>
   );

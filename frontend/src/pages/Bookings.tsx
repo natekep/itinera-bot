@@ -1,362 +1,312 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import axios from "axios";
 import MapView from "../components/MapView";
+import { useParams } from "react-router-dom";
+import { supabase } from "../supabaseClient";
 
 const BACKEND_URL = "http://127.0.0.1:8000";
 
 export default function Bookings() {
-  const [departure, setDeparture] = useState("");
-  const [destination, setDestination] = useState("");
+  const { itinerary_id } = useParams();
+  const [ loading, setLoading ] = useState(true);
+  const [ itinerary, setItinerary] = useState<any>(null);
+  const [ activities, setActivities ] = useState<any[]>([]);
   const [coords, setCoords] = useState<{ lat: number; lng: number }[]>([]);
-  const [flights, setFlights] = useState<any[]>([]);
-  const [hotels, setHotels] = useState<any[]>([]);
-  const [departureDate, setDepartureDate] = useState<string>("");
-  const [returnDate, setReturnDate] = useState<string>("");
+  const [travelTimes, setTravelTimes] = useState<string[]>([]);
 
-  // GeoCode func
-  const handleSearch = async () => {
-    if (!departure || !destination) return;
+  const GOOGLE_KEY = import.meta.env.VITE_MAP_CLIENT_KEY;
+
+  // Load itinerary from Supabase
+  const loadItinerary = async () => {
+    setLoading(true);
+    const { data, error } = await supabase
+      .from("itineraries")
+      .select(`
+        id,
+        title,
+        destination,
+        start_date,
+        end_date,
+        num_guests,
+        itinerary_days (
+          id,
+          day_number,
+          date,
+          notes,
+          activities (
+            id,
+            name,
+            category,
+            location_name,
+            place_id,
+            description,
+            start_time,
+            end_time,
+            location_address,
+            latitude,
+            longitude
+          )
+        )
+      `)
+      .eq("id", itinerary_id)
+      .single();
+
+    if (error) {
+      console.error("Error loading itinerary: ", error);
+      setLoading(false);
+      return;
+    }
+    setItinerary(data);
+
+    const flatActivities = data.itinerary_days.flatMap((day: any) => day.activities);
+    setActivities(flatActivities);
+    //setLoading(false);
+  //};
+
+    // Extract lat/lng
+    const points = flatActivities
+      .filter((a: any) => a.latitude && a.longitude)
+      .map((a: any) => ({
+      lat: a.latitude,
+      lng: a.longitude,
+      }));
+
+    setCoords(points);
+    setLoading(false);
+  };
+
+  // Getting coordinates from google place id
+  /*const getCoordsFromPlaceId = async (placeId: string) => {
     try {
-      const geo = await axios.get(`${BACKEND_URL}/geocode`, {
-        params: { address: departure },
-      });
-
-      const departureLoc = geo.data?.results?.[0]?.geometry?.location;
-      if (!departureLoc) return alert("Could not geocode departure city.");
-
-      const geo2 = await axios.get(`${BACKEND_URL}/geocode`, {
-        params: { address: destination },
-      });
-
-      const destinationLoc = geo2.data?.results?.[0]?.geometry?.location;
-      if (!destinationLoc) return alert("Could not geocode destination city.");
-
-      setCoords([
-        { lat: departureLoc.lat, lng: departureLoc.lng },
-        { lat: destinationLoc.lat, lng: destinationLoc.lng },
-      ]);
-
-      const hotelRes = await axios.get(`${BACKEND_URL}/places/hotels`, {
-        params: { lat: destinationLoc.lat, lng: destinationLoc.lng },
-      });
-
-      const formattedHotels =
-        hotelRes.data.places?.map((h: any) => ({
-          name: h.displayName?.text || "Hotel",
-          address: h.formattedAddress || "",
-          rating: h.rating || "N/A",
-          location: {
-            latitude: h.location?.latitude || null,
-            longitude: h.location?.longitude || null,
+      const res = await axios.get(
+        "https://maps.googleapis.com/maps/api/place/details/json",
+        {
+          params: {
+            place_id: placeId,
+            key: GOOGLE_KEY,
+            fields: "geometry",
           },
-          price: Math.floor(Math.random() * 200) + 80,
-        })) || [];
-
-      setHotels(formattedHotels);
-
-      const departureAirportRes = await axios.get(
-        `${BACKEND_URL}/places/airports`,
-        {
-          params: { lat: departureLoc.lat, lng: departureLoc.lng },
         }
       );
-      const departureAirport = departureAirportRes.data.data[0].iata_code;
 
-      const destinationAirportRes = await axios.get(
-        `${BACKEND_URL}/places/airports`,
-        {
-          params: { lat: destinationLoc.lat, lng: destinationLoc.lng },
-        }
-      );
-      const destinationAirport = destinationAirportRes.data.data[0].iata_code;
-
-      const flightRes = await axios.get(`${BACKEND_URL}/flights/search`, {
-        params: {
-          origin: departureAirport,
-          destination: destinationAirport,
-          departure_date: departureDate,
-          return_date: returnDate,
-        },
-      });
-
-      setFlights(flightRes.data.data.offers);
-    } catch (err) {
-      console.error(err);
+      return res.data.result?.geometry?.location || null;
+    } catch (err: any) {
+      console.error("Place Details Error:", err.response?.data || err);
+      return null;
     }
   };
 
+  // load coordinates
+  const loadCoordinates = async () => {
+    const results: { lat: number; lng: number }[] = [];
+
+    for (const a of activities) {
+      if (!a.place_id) continue;
+
+      const loc = await getCoordsFromPlaceId(a.place_id);
+      if (loc) results.push({ lat: loc.lat, lng: loc.lng });
+    }
+    setCoords(results);
+  };
+*/
+
+  // google route matrix api
+  // google route matrix api — now returning DISTANCE instead of TRAVEL TIME
+  const getTravelTimes = async () => {
+    if (activities.length < 2) return;
+
+    const distances: string[] = [];
+
+    for (let i = 0; i < activities.length - 1; i++) {
+      const origin = activities[i];
+      const dest = activities[i + 1];
+
+      if (!origin.latitude || !dest.latitude) {
+        distances.push("N/A");
+        continue;
+      }
+
+      try {
+        const res = await axios.post(
+          "https://routes.googleapis.com/distanceMatrix/v2:computeRouteMatrix",
+          {
+            origins: [
+              {
+                waypoint: {
+                  location: {
+                    latLng: {
+                      latitude: origin.latitude,
+                      longitude: origin.longitude,
+                    },
+                  },
+                },
+              },
+            ],
+            destinations: [
+              {
+                waypoint: {
+                  location: {
+                    latLng: {
+                      latitude: dest.latitude,
+                      longitude: dest.longitude,
+                    },
+                  },
+                },
+              },
+            ],
+            travelMode: "DRIVE",
+          },
+          {
+            headers: {
+              "Content-Type": "application/json",
+              "X-Goog-Api-Key": GOOGLE_KEY,
+              "X-Goog-FieldMask":
+                "originIndex,destinationIndex,distanceMeters",
+            },
+          }
+        );
+
+        const entry = res.data[0];
+        let text = "N/A";
+
+        if (entry?.distanceMeters !== undefined) {
+          const km = entry.distanceMeters / 1000;
+          text = `${km.toFixed(1)} km`;
+        }
+
+        distances.push(text);
+      } catch (err: any) {
+        console.error("Distance API error:", err.response?.data || err);
+        distances.push("N/A");
+      }
+    }
+
+    setTravelTimes(distances);
+  };
+
+
+  // GeoCode func
+  /*
+  const geocodeActivities = async () => {
+    if (!activities.length) return;
+    const results: { lat: number, lng: number } [] = [];
+
+    for( let act of activities) {
+      if ( !act.location_name) continue;
+      try {
+        const geo = await axios.get(`${BACKEND_URL}/geocode`, {
+        params: { address: act.location_name },
+        });
+
+        const loc = geo.data.results?.[0]?.geometry?.location ?? null;
+        if ( loc ) {
+          results.push({ lat: loc.lat, lng: loc.lng });
+          }
+      } catch (err) {
+        console.error("Geocode error: ", err);
+      }
+    }
+
+    setCoords(results);
+  };
+*/
+  useEffect(() => {
+    loadItinerary();
+  }, [itinerary_id]);
+
+  /*useEffect(() => {
+    // geocodeActivities();
+    if ( activities.length) loadCoordinates();
+  }, [activities]);
+*/
+  useEffect(() => {
+    if ( activities.length > 1) getTravelTimes();
+  }, [ activities]);
+
+
+  const letter = (i: number) => {
+    let s = "";
+    while (i >= 0) {
+      s = String.fromCharCode((i % 26) + 65) + s;
+      i = Math.floor(i / 26) - 1;
+    }
+    return s;
+  };
+
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center h-screen text-grey-600">
+        Loading itinerary . . .
+      </div>
+    );
+  } 
+
+  if( !itinerary ) {
+    return (
+    <div className="flex items-center justify-center h-screen text-grey-600">
+        Itinerary not found.
+      </div>
+    );
+  }
+
+  const flat = itinerary.itinerary_days.flatMap((d: any) => d.activities);
+
+  const indexMap = new Map();
+  flat.forEach((a: any, i: number) => indexMap.set(a.id, i));
+
   return (
     <div className="flex flex-row min-h-screen bg-gray-50">
-      {/* Left panel: Booking options */}
-      <div className="w-[30%] bg-white border-r border-gray-300 p-6">
-        <h1 className="text-2xl font-semibold text-gray-800 mb-6">
-          Booking Options
+      {/* Left panel: Trip Summary */}
+      <div className="w-[30%] bg-white border-r border-gray-300 p-6 overflow-y-auto">
+        <h1 className="text-2xl font-semibold text-gray-800 mb-4">
+          {itinerary.title}
         </h1>
 
-        {/* Depart Loc*/}
-        <div className="mb-6">
-          <label className="block text-gray-700 font-medium">
-            Departure Location
-          </label>
-          <input
-            type="text"
-            value={departure}
-            onChange={(e) => setDeparture(e.target.value)}
-            placeholder="Enter City"
-            className="w-full mt-1 p-2 border rounded-lg focus:ring 
-              focus:ring-blue-200"
-          />
-        </div>
+        <p className="text-grey-600 text-sm mb-6">
+          {itinerary.destination} <br />
+          {itinerary.start_date} → {itinerary.end_date}
+        </p>
 
-        {/* Destination Loc*/}
-        <div className="mb-6">
-          <label className="block text-gray-700 font-medium">
-            Destination Location
-          </label>
-          <input
-            type="text"
-            value={destination}
-            onChange={(e) => setDestination(e.target.value)}
-            placeholder="Enter City"
-            className="w-full mt-1 p-2 border rounded-lg focus:ring 
-              focus:ring-blue-200"
-          />
-        </div>
+        {itinerary.itinerary_days.map((day: any) => (
+          <div key={day.id} className="mb=6">
+            <h2 className="font-semibold text-grey-800">
+              Day {day.day_number} - {day.date}
+            </h2>
+            <ul className="mt-2 ml-2 space-y-2">
+              {day.activities.map((act: any) => {
+                const idx = indexMap.get(act.id);
+                return (
+                  <li key={act.id} className="flex gap-2 text-sm">
+                    <span className="font-bold text-blue-600">
+                      {letter(idx)}.
+                    </span>
+                    <div>
+                      <strong>{act.name}</strong>
+                      <p className="text-gray-500">{act.description?.slice(0, 60)}...</p>
 
-        <div className="mb-6">
-          <label className="block text-gray-700 font-medium">
-            Departure Date
-          </label>
-          <input
-            type="date"
-            value={departureDate}
-            onChange={(e) => setDepartureDate(e.target.value)}
-            placeholder="Enter City"
-            className="w-full mt-1 p-2 border rounded-lg focus:ring 
-              focus:ring-blue-200"
-          />
-        </div>
-
-        <div className="mb-6">
-          <label className="block text-gray-700 font-medium">Return Date</label>
-          <input
-            type="date"
-            value={returnDate}
-            onChange={(e) => setReturnDate(e.target.value)}
-            placeholder="Enter City"
-            className="w-full mt-1 p-2 border rounded-lg focus:ring 
-              focus:ring-blue-200"
-          />
-        </div>
-
-        {/* Search button */}
-        <button
-          onClick={handleSearch}
-          className="mt-4 w-full bg-blue-600 text-white p-3 
-          rounded-lg hover:bg-blue-700 transition disabled:bg-gray-400"
-          disabled={!departure}
-        >
-          Search Options
-        </button>
+                      {idx < travelTimes.length && (
+                        <p className="text-xs text-gray-500 mt-1">
+                          Distance to next stop:{" "}
+                          <strong>{travelTimes[idx]}</strong>
+                        </p>
+                      )}
+                    </div>
+                  </li>
+                );
+              })}
+            </ul>
+          </div>
+        ))}
       </div>
 
-      {/* Right Panel: Map+flights+hotels */}
+      {/* Right Panel: Map */}
       <div className="flex-1 p-6 space-y-6">
-        {/* Map sect */}
-        <div>
-          <h2 className="text-xl font-semibold text-gray-700 mb-3">Map</h2>
-          <div className="w-full h-[40vh] rounded-lg overflow-hidden shadow">
-            <MapView coords={coords} places={hotels} />
-          </div>
-        </div>
-
-        {/* Flight + hotels */}
-        <div className="grid grid-cols-3 gap-6">
-          {/* Flights */}
-          <div className="bg-white rounded-lg p-4 shadow h-[45vh] overflow-auto col-span-1">
-            <h3 className="text-xl font-semibold text-gray-700 mb-3">
-              Available Flights
-            </h3>
-            {flights.length === 0 ? (
-              <p className="text-gray-500">Flight results:</p>
-            ) : (
-              flights.map((offer, i) => {
-                const outboundSlice = offer.slices?.[0];
-                const returnSlice = offer.slices?.[1];
-                const outboundSeg = outboundSlice?.segments?.[0];
-                const returnSeg = returnSlice?.segments?.[0];
-
-                const price = offer.total_amount;
-                const currency = offer.total_currency;
-                const emissionsKg = offer.total_emissions_kg;
-
-                const changeAllowed =
-                  offer.conditions?.change_before_departure?.allowed;
-                const changePenalty =
-                  offer.conditions?.change_before_departure?.penalty_amount;
-                const paymentBy =
-                  offer.payment_requirements?.payment_required_by;
-
-                return (
-                  <div
-                    key={i}
-                    className="mb-3 border rounded-lg p-3 text-sm flex flex-col gap-2"
-                  >
-                    {/* Header: airline + price */}
-                    <div className="flex items-center justify-between gap-3">
-                      <div className="flex items-center gap-2">
-                        <img
-                          src={offer.owner.logo_symbol_url}
-                          alt={offer.owner.name}
-                          className="w-7 h-7"
-                        />
-                        <div>
-                          <div className="font-semibold text-gray-900">
-                            {offer.owner.name}
-                          </div>
-                          <div className="text-xs text-gray-500">
-                            {outboundSlice?.fare_brand_name || "Economy"}
-                          </div>
-                        </div>
-                      </div>
-                      <div className="text-right">
-                        <div className="text-base font-semibold text-blue-700">
-                          {currency} {price}
-                        </div>
-                        <div className="text-[11px] text-gray-500">
-                          Base {offer.base_currency} {offer.base_amount} + tax{" "}
-                          {offer.tax_currency} {offer.tax_amount}
-                        </div>
-                      </div>
-                    </div>
-
-                    {/* Outbound & return summary */}
-                    <div className="space-y-2 bg-gray-50 rounded-md p-2">
-                      {outboundSeg && (
-                        <div className="flex justify-between items-start gap-2">
-                          <div>
-                            <div className="text-xs uppercase text-gray-500">
-                              Outbound
-                            </div>
-                            <div className="font-medium text-gray-800">
-                              {outboundSeg.origin?.iata_code} →{" "}
-                              {outboundSeg.destination?.iata_code}
-                            </div>
-                            <div className="text-[11px] text-gray-500">
-                              {new Date(
-                                outboundSeg.departing_at
-                              ).toLocaleString()}{" "}
-                              ·{" "}
-                              {outboundSlice?.duration
-                                ?.replace("PT", "")
-                                .toLowerCase()}
-                            </div>
-                          </div>
-                          <div className="text-right text-[11px] text-gray-500">
-                            Flight {outboundSeg.marketing_carrier_flight_number}
-                          </div>
-                        </div>
-                      )}
-
-                      {returnSeg && (
-                        <div className="flex justify-between items-start gap-2 border-t border-dashed border-gray-200 pt-2">
-                          <div>
-                            <div className="text-xs uppercase text-gray-500">
-                              Return
-                            </div>
-                            <div className="font-medium text-gray-800">
-                              {returnSeg.origin?.iata_code} →{" "}
-                              {returnSeg.destination?.iata_code}
-                            </div>
-                            <div className="text-[11px] text-gray-500">
-                              {new Date(
-                                returnSeg.departing_at
-                              ).toLocaleString()}{" "}
-                              ·{" "}
-                              {returnSlice?.duration
-                                ?.replace("PT", "")
-                                .toLowerCase()}
-                            </div>
-                          </div>
-                          <div className="text-right text-[11px] text-gray-500">
-                            Flight {returnSeg.marketing_carrier_flight_number}
-                          </div>
-                        </div>
-                      )}
-                    </div>
-
-                    {/* Meta: baggage / emissions / rules */}
-                    <div className="flex justify-between items-center text-[11px] text-gray-600">
-                      <div className="flex flex-col">
-                        <span>Emissions: {emissionsKg} kg CO₂</span>
-                        <span>
-                          Cabin:{" "}
-                          {outboundSlice?.segments?.[0]?.passengers?.[0]
-                            ?.cabin_class_marketing_name || "Economy"}
-                        </span>
-                      </div>
-                      <div className="text-right flex flex-col">
-                        <span>
-                          Change:{" "}
-                          {changeAllowed
-                            ? `allowed (fee ${changePenalty})`
-                            : "not allowed"}
-                        </span>
-                        {paymentBy && (
-                          <span>
-                            Pay by {new Date(paymentBy).toLocaleString()}
-                          </span>
-                        )}
-                      </div>
-                    </div>
-                  </div>
-                );
-              })
-            )}
-          </div>
-          {/* hotels */}
-          <div className="bg-white rounded-l p-4 shadow h-[45vh] overflow-auto col-span-2">
-            <h3 className="text-lg font-semibold text-gray-700 mb-3">
-              Nearby Hotels:
-            </h3>
-            {hotels.length === 0 ? (
-              <p className="text-gray-500">Hotel results:</p>
-            ) : (
-              <div className="space-y-3">
-                {hotels.map((h, i) => (
-                  <div
-                    key={i}
-                    className="border rounded-lg p-3 text-sm flex flex-col gap-2"
-                  >
-                    {/* Header: hotel name + price */}
-                    <div className="flex items-start justify-between gap-3">
-                      <div>
-                        <div className="font-semibold text-gray-900">
-                          {h.name}
-                        </div>
-                        <div className="text-[11px] text-gray-500">Hotel</div>
-                      </div>
-                      <div className="text-right">
-                        <div className="text-base font-semibold text-blue-700">
-                          ${h.price}/night
-                        </div>
-                        <div className="text-[11px] text-gray-500">
-                          Rating: {h.rating}
-                        </div>
-                      </div>
-                    </div>
-
-                    {/* Details: address & meta */}
-                    <div className="bg-gray-50 rounded-md p-2 flex flex-col gap-1">
-                      <div className="text-[11px] text-gray-600">
-                        {h.address}
-                      </div>
-                    </div>
-                  </div>
-                ))}
-              </div>
-            )}
-          </div>
+        <h2 className="text-xl font-semibold text-gray-700 mb-3">Map</h2>
+        <div className="w-full h-[40vh] rounded-lg overflow-hidden shadow">
+            <MapView coords={coords} 
+              markerLabels={flat.map((_, i) => letter(i))}
+            /> 
+            {/* or: <MapView coords={coords} places={[]} /> */}
         </div>
       </div>
     </div>

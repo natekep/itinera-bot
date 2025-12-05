@@ -2,72 +2,75 @@ import React, { useEffect, useRef } from "react";
 
 interface MapViewProps {
   coords: { lat: number; lng: number }[];
+  markerLabels: string[];
 }
 
-const MapView: React.FC<MapViewProps> = ({ coords }) => {
+const MapView: React.FC<MapViewProps> = ({ coords, markerLabels }) => {
   const mapRef = useRef<HTMLDivElement>(null);
-  const mapInstance = useRef<InstanceType<typeof window.google.maps.Map> | null>(null);
-  const routePath = useRef<InstanceType<typeof window.google.maps.Polyline> | null>(null);
-  const markers = useRef<InstanceType<typeof window.google.maps.Marker>[]>([]);
+  const mapInstance = useRef<google.maps.Map | null>(null);
+  const markers = useRef<agoogle.maps.Marker[]>([]);
+  const polyline = useRef<google.maps.Polyline | null>(null);
 
-  // Initialize the map
+  // Initialize map once
   useEffect(() => {
-    if (!mapRef.current) return;
+    if (!mapRef.current || !window.google?.maps) return;
 
-    const g = window.google;
-    if (!g || !g.maps) return;
-
-    const map = new g.maps.Map(mapRef.current, {
-      center: { lat: 39.8283, lng: -98.5795 }, // center of US
+    mapInstance.current = new google.maps.Map(mapRef.current, {
+      center: { lat: 39.8283, lng: -98.5795 }, // USA center
       zoom: 4,
+      mapId: "DEMO_MAP_ID"
     });
-    mapInstance.current = map;
   }, []);
 
-  // Update markers & polyline
+  // Update markers + route whenever coords or placeIds change
   useEffect(() => {
-    const g = window.google;
-    if (!g || !g.maps || !mapInstance.current) return;
+    if (!mapInstance.current || !window.google?.maps) return;
 
-    const map = mapInstance.current;
+    const g = window.google.maps;
 
-    // Clear previous overlays
-    routePath.current?.setMap(null);
-    markers.current.forEach((m) => m.setMap(null));
+    // Clear old markers
+    markers.current.forEach((m) => m.map = null as any);
     markers.current = [];
 
-    // Add new markers
+    // Clear old route line
+    if (polyline.current) {
+      polyline.current.setMap(null);
+      polyline.current = null;
+    }
+
+    if (coords.length === 0) {
+      // nothing to show, just keep default center
+      return;
+    }
+
+    const bounds = new g.LatLngBounds();
     coords.forEach((c, i) => {
-      const marker = new g.maps.Marker({
+      const marker = new google.maps.Marker({
+        map: mapInstance.current!,
         position: c,
-        map,
-        label: String.fromCharCode(65 + i),
+        title: markerLabels[i],
       });
       markers.current.push(marker);
+      bounds.extend(c);
     });
 
-    // Draw route line
     if (coords.length > 1) {
-      const polyline = new g.maps.Polyline({
+      polyline.current = new g.Polyline({
         path: coords,
         geodesic: true,
         strokeColor: "#4285F4",
-        strokeOpacity: 0.8,
+        strokeOpacity: 0.9,
         strokeWeight: 4,
+        map: mapInstance.current
       });
-      polyline.setMap(map);
-      routePath.current = polyline;
     }
-
-    const bounds = new g.maps.LatLngBounds();
-    coords.forEach((c) => bounds.extend(c));
-    if (!bounds.isEmpty()) map.fitBounds(bounds);
-  }, [coords]);
+    mapInstance.current.fitBounds(bounds);
+    }, [coords, markerLabels]);
 
   return (
     <div
       ref={mapRef}
-      className="w-full h-full rounded-lg shadow-md border border-gray-200"
+      className="w-full h-full rounded-lg shadow border border-gray-200"
     />
   );
 };
