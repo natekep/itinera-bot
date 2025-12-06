@@ -1,6 +1,7 @@
 import os
 import time
 import requests
+import re
 import uvicorn
 from fastapi import FastAPI, Query, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
@@ -68,22 +69,35 @@ if GEMINI_API_KEY:
 def read_root():
     return {"message": "FastAPI backend running!"}
 
+class Location(BaseModel):
+    name: str
+    address: Optional[str] = None
+    coordinates: Optional[dict] = None  # {lat: float, lng: float}
+
 class Activity(BaseModel):
-    start_time: str
-    end_time: str
+    id: Optional[str] = None
+    name: str
+    type: str
+    startTime: str
+    endTime: str
+    location: Optional[Location] = None
     description: str
+    bookingUrl: Optional[str] = None
+    isFixed: Optional[bool] = False
+    cost: Optional[float] = 0
+    notes: Optional[str] = ""
 
 class ItineraryDay(BaseModel):
-    day: int
     date: str
-    title: str
     activities: List[Activity]
 
 class StructuredItinerary(BaseModel):
     id: Optional[int] = None
+    title: str
     destination: str
-    start_date: str
-    end_date: str
+    startDate: str
+    endDate: str
+    guests: int
     days: List[ItineraryDay]
 
 class StructuredChatResponse(BaseModel):
@@ -99,10 +113,10 @@ def save_itinerary(user_id: str, people: str, itinerary: StructuredItinerary):
         # Insert into itineraries table
         itinerary_insert = {
             "destination": itinerary.destination,
-            "start_date": itinerary.start_date,
-            "end_date": itinerary.end_date,
+            "start_date": itinerary.startDate,
+            "end_date": itinerary.endDate,
             "user_id": user_id,
-            "num_guests": people,
+            "num_guests": people, 
             "title": f"Trip to {itinerary.destination}"
         }
         print("Inserting itinerary:", itinerary_insert)
@@ -117,13 +131,17 @@ def save_itinerary(user_id: str, people: str, itinerary: StructuredItinerary):
         
         # Insert into itinerary_days table
         days_to_insert = []
-        for day in itinerary.days:
-            notes = "\n".join([f"{act.start_time}-{act.end_time}: {act.description}" for act in day.activities])
+        for i, day in enumerate(itinerary.days):
+            # Serialize the full activity object to JSON for the 'notes' field (or a new JSONB field if you have one)
+            # For backward compatibility with the 'notes' text column, we'll store the JSON string.
+            # Ideally, you should migrate 'notes' to a JSONB column or create a new 'activities' column.
+            activities_json = [act.model_dump() for act in day.activities]
+            
             days_to_insert.append({
                 "itinerary_id": itinerary_id,
-                "day_number": day.day,
+                "day_number": i + 1, # Sequential day number
                 "date": day.date,
-                "notes": notes
+                "notes": json.dumps(activities_json) # Storing JSON in the notes field for now
             })
         
         if days_to_insert:
@@ -188,38 +206,38 @@ async def chat(request: ChatRequest):
 
                 # 3. Transform and validate if the itinerary object exists
                 if gemini_itinerary:
-                    transformed_days = []
-                    # Ensure 'days' exists and is a list before iterating
+                    # --- Geocoding Injection Start ---
+                    # Iterate through days and activities to fetch coordinates
                     if isinstance(gemini_itinerary.get("days"), list):
                         for day in gemini_itinerary["days"]:
-                            transformed_days.append({
-                                "day": day.get("day"),
-                                "date": day.get("date"),
-                                "title": day.get("theme"), # Map theme to title
-                                "activities": day.get("activities", [])
-                            })
+                            if isinstance(day.get("activities"), list):
+                                for activity in day["activities"]:
+                                    loc = activity.get("location")
+                                    if loc and isinstance(loc, dict):
+                                        # Construct a query address
+                                        query_addr = loc.get("address") or loc.get("name")
+                                        if query_addr:
+                                            # Call Google Geocoding API
+                                            try:
+                                                geo_res = geocode(query_addr)
+                                                if geo_res.get("results"):
+                                                    location_data = geo_res["results"][0]["geometry"]["location"]
+                                                    loc["coordinates"] = location_data
+                                            except Exception as geo_err:
+                                                print(f"Geocoding failed for {query_addr}: {geo_err}")
+                    # --- Geocoding Injection End ---
 
-                    # Proceed only if we have transformed days
-                    if transformed_days:
-                        transformed_itinerary = {
-                            "destination": gemini_itinerary.get("destination"),
-                            # Infer start and end dates from the days array
-                            "start_date": transformed_days[0].get("date"),
-                            "end_date": transformed_days[-1].get("date"),
-                            "days": transformed_days
-                        }
-                        
-                        # 4. Validate the transformed data with our Pydantic model
-                        itinerary_data = StructuredItinerary.model_validate(transformed_itinerary)
-                        
-                        # 5. Save the validated itinerary if user_id is provided
-                        if request.user_id and request.people and itinerary_data:
-                            itinerary_id = save_itinerary(request.user_id, request.people, itinerary_data)
-                            if itinerary_id:
-                                # Add the ID to the itinerary data so it can be returned to the frontend
-                                itinerary_data.id = itinerary_id
-                    else:
-                        itinerary_data = None # No valid days found
+                    # 4. Validate the transformed data with our Pydantic model
+                    # The structure from Gemini should now match the Pydantic model directly
+                    # because we updated the system prompt to match the Pydantic model.
+                    itinerary_data = StructuredItinerary.model_validate(gemini_itinerary)
+                    
+                    # 5. Save the validated itinerary if user_id is provided
+                    if request.user_id and request.people and itinerary_data:
+                        itinerary_id = save_itinerary(request.user_id, request.people, itinerary_data)
+                        if itinerary_id:
+                            # Add the ID to the itinerary data so it can be returned to the frontend
+                            itinerary_data.id = itinerary_id
                 else:
                     itinerary_data = None # No trip_itinerary key found
                 
@@ -265,32 +283,59 @@ def get_itinerary_details(itinerary_id: int, user_id: str):
         
         days_data = []
         for day in days_res.data:
-            # This is a simplified version. In a real app, you'd parse the 'notes' field back into activities.
-            # For now, we'll just pass the notes. A better approach would be a separate 'activities' table.
             activities = []
             if day.get("notes"):
-                for line in day["notes"].split("\n"):
-                    parts = line.split(": ", 1)
-                    if len(parts) == 2:
-                        time_range, description = parts
-                        start_time, end_time = time_range.split('-')
-                        activities.append({"start_time": start_time, "end_time": end_time, "description": description})
+                try:
+                    # Try to parse the notes as JSON (new format)
+                    activities_raw = json.loads(day["notes"])
+                    # Validate/Convert back to Activity objects if needed, or just pass through
+                    activities = activities_raw 
+                except json.JSONDecodeError:
+                    print(f"Failed to parse activities JSON for day {day['day_number']} of itinerary {itinerary_id}. Falling back to text parsing.")
+                    # Fallback for old text-based notes
+                    for line in day["notes"].split("\n"):
+                        parts = line.split(": ", 1)
+                        if len(parts) == 2:
+                            time_range, description = parts
+                            start_time, end_time = time_range.split('-')
+                            activities.append({
+                                "name": "Activity", # Placeholder
+                                "type": "activity",
+                                "startTime": start_time,
+                                "endTime": end_time,
+                                "description": description
+                            })
 
             days_data.append({
-                "day": day["day_number"],
                 "date": day["date"],
-                "title": f"Day {day['day_number']}", # Title is not stored per day, so we generate it
                 "activities": activities
             })
 
+        # Safely parse guests count
+        raw_guests = itinerary.get("num_guests")
+        guests_count = 1
+        if isinstance(raw_guests, int):
+            guests_count = raw_guests
+        elif isinstance(raw_guests, str):
+            # Extract first number found
+            match = re.search(r'\d+', raw_guests)
+            if match:
+                guests_count = int(match.group())
+
         return {
+            "id": itinerary["id"],
+            "title": itinerary.get("title", f"Trip to {itinerary['destination']}"),
             "destination": itinerary["destination"],
-            "start_date": itinerary["start_date"],
-            "end_date": itinerary["end_date"],
+            "startDate": itinerary["start_date"],
+            "endDate": itinerary["end_date"],
+            "guests": guests_count,
             "days": days_data
         }
 
     except Exception as e:
+        import traceback
+        print(f"Error fetching itinerary details: {type(e).__name__}: {str(e)}")
+        traceback.print_exc()
         raise HTTPException(status_code=500, detail=str(e))
 
 @app.get("/v1/itinerary/{itinerary_id}", response_model=StructuredItinerary)
