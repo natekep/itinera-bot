@@ -15,20 +15,26 @@ export default function SignUp() {
     e.preventDefault(); // prevents page reload when form is submitted
 
     // supabase sign up call
-    const { error } = await supabase.auth.signUp({
+    const { data, error } = await supabase.auth.signUp({
       email,
       password,
       options: {
         data: {
           full_name: fullName,
         },
+        // Redirect the user to this page after they click the email link
+        emailRedirectTo: `${window.location.origin}/onboarding`,
       },
     });
 
-    if (error) {
-      alert(error.message);
+    // Check if email confirmation is required
+    if (data.user && !data.session) {
+      alert("Registration successful! Please check your email to confirm your account.");
+      // You might want to navigate to a "Check your email" page or clear the form
+      navigate("/login"); 
     } else {
-      alert("Sign up is succesful!");
+      // If auto-confirm is on (or for testing), log them in immediately
+      alert("Sign up is successful!");
       navigate("/onboarding");
     }
   }
