@@ -21,7 +21,13 @@ app = FastAPI()
 # CORS (Cross-Origin Resource Sharing) prohibits unauthorized websites, endpoints, or servers from accessing the API
 
 # Services from this origin can access the api
-origins = ["http://localhost:5173", "https://itinera-bot.web.app"]
+origins = [
+    "http://localhost:5173",
+    "http://127.0.0.1:5173",
+    "https://itinera-bot.web.app",
+    'http://localhost:5174'
+]
+
 
 app.add_middleware(
     CORSMiddleware,
@@ -29,6 +35,7 @@ app.add_middleware(
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
+    expose_headers=["*"],
 )
 
 # SUPABASE setup
@@ -405,12 +412,6 @@ def generate_itinerary(req: TripDetails):
 
 
 # ITINERAY REGENERATION
-from fastapi import FastAPI, HTTPException
-from pydantic import BaseModel
-from openai import OpenAI
-import json
-
-
 class RegenerateRequest(BaseModel):
     original_itinerary: dict
     approvals: dict
