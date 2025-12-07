@@ -6,7 +6,7 @@ import { supabase } from "../supabaseClient";
 
 const BACKEND_URL = "http://127.0.0.1:8000";
 
-export default function Bookings() {
+export default function TripSummary() {
   const { itinerary_id } = useParams();
   const [ loading, setLoading ] = useState(true);
   const [ itinerary, setItinerary] = useState<any>(null);

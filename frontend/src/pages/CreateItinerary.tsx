@@ -266,7 +266,7 @@ export default function CreateItinerary() {
       if (data.status === "success") {
         console.log("Saved!", data);
         alert("Itinerary saved successfully!");
-        navigate(`/bookings/${data.itinerary_id}`);
+        navigate(`/tripSummary/${data.itinerary_id}`);
       }
     } catch (err) {
       console.error(err);

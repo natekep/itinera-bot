@@ -12,7 +12,7 @@ import Explore from "./pages/Explore";
 import CreateItinerary from "./pages/CreateItinerary";
 import Onboarding from "./pages/Onboarding";
 import Profile from "./pages/Profile";
-import Bookings from "./pages/Bookings";
+import TripSummary from "./pages/TripSummary";
 
 function AppContainer() {
   const location = useLocation();
@@ -39,7 +39,7 @@ function AppContainer() {
         <Route path="/create" element={<CreateItinerary />} />
         <Route path="/onboarding" element={<Onboarding />} />
         <Route path="/profile" element={<Profile />}></Route>
-        <Route path="/bookings/:itinerary_id" element={<Bookings />}></Route>
+        <Route path="/tripSummary/:itinerary_id" element={<TripSummary />}></Route>
       </Routes>
     </div>
   );
