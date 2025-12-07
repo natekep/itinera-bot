@@ -3,12 +3,13 @@ import React, { useEffect, useRef } from "react";
 interface MapViewProps {
   coords: { lat: number; lng: number }[];
   markerLabels: string[];
+  onMapLoad?: (map: google.maps.Map) => void;
 }
 
-const MapView: React.FC<MapViewProps> = ({ coords, markerLabels }) => {
+const MapView: React.FC<MapViewProps> = ({ coords, markerLabels, onMapLoad }) => {
   const mapRef = useRef<HTMLDivElement>(null);
   const mapInstance = useRef<google.maps.Map | null>(null);
-  const markers = useRef<agoogle.maps.Marker[]>([]);
+  const markers = useRef<google.maps.Marker[]>([]);
   const polyline = useRef<google.maps.Polyline | null>(null);
 
   // Initialize map once
@@ -20,6 +21,7 @@ const MapView: React.FC<MapViewProps> = ({ coords, markerLabels }) => {
       zoom: 4,
       mapId: "DEMO_MAP_ID"
     });
+    if (onMapLoad) onMapLoad(mapInstance.current);
   }, []);
 
   // Update markers + route whenever coords or placeIds change
@@ -29,7 +31,7 @@ const MapView: React.FC<MapViewProps> = ({ coords, markerLabels }) => {
     const g = window.google.maps;
 
     // Clear old markers
-    markers.current.forEach((m) => m.map = null as any);
+    markers.current.forEach((m) => m.setMap(null));
     markers.current = [];
 
     // Clear old route line
@@ -48,7 +50,12 @@ const MapView: React.FC<MapViewProps> = ({ coords, markerLabels }) => {
       const marker = new google.maps.Marker({
         map: mapInstance.current!,
         position: c,
-        title: markerLabels[i],
+        label: {
+          text: markerLabels[i], // e.g., A, B, C
+          color: "white",
+          fontWeight: "bold",
+        },
+        
       });
       markers.current.push(marker);
       bounds.extend(c);
