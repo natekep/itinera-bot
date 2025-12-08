@@ -4,12 +4,15 @@ import MapView from "../components/MapView";
 import { useParams } from "react-router-dom";
 import { supabase } from "../supabaseClient";
 import { Car, Footprints, Bike, Bus, Clock, MapPin } from "lucide-react";
+import { useNavigate } from "react-router-dom";
 
 
 const BACKEND_URL = "http://127.0.0.1:8000";
 
 export default function TripSummary() {
   const { itinerary_id } = useParams();
+  const navigate = useNavigate();
+
   const [loading, setLoading] = useState(true);
   const [itinerary, setItinerary] = useState<any>(null);
   const [activities, setActivities] = useState<any[]>([]);
@@ -286,6 +289,27 @@ export default function TripSummary() {
     return activities.findIndex((a) => a.id === activityId);
   };
 
+   // Export function
+  const exportItinerary = () => {
+    if (!itinerary || !itinerary.itinerary_days) return;
+
+    let csv = "Day,Activity,Start Time,End Time,Location,Description\n";
+    itinerary.itinerary_days.forEach((day: any) => {
+      day.activities?.forEach((act: any) => {
+        csv += `${day.day_number},${act.name},${act.start_time || ""},${act.end_time || ""},${act.location_address || ""},${act.description || ""}\n`;
+      });
+    });
+
+    const blob = new Blob([csv], { type: "text/csv;charset=utf-8;" });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement("a");
+    link.href = url;
+    link.setAttribute("download", `${itinerary.title || "itinerary"}.csv`);
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+  };
+
   // Load itinerary on mount / when id changes
   useEffect(() => {
     loadItinerary();
@@ -349,6 +373,24 @@ export default function TripSummary() {
             {itinerary.destination} <br />
             {itinerary.start_date} → {itinerary.end_date}
           </p>
+
+          {/* Print, Export, Home Buttons */}
+          <div className="flex gap-3 mb-4">
+            <button onClick={() => window.print()}
+            className="px-5 py-2 bg-blue-500 text-white rounded hover:bg-blue-700 transition" >
+              Print
+            </button> 
+
+            <button onClick={() => exportItinerary()}
+            className="px-5 py-2 bg-blue-500 text-white rounded hover:bg-blue-700 transition" >
+              Export
+            </button>
+
+            <button onClick={() => navigate("/")}
+            className="px-5 py-2 bg-blue-500 text-white rounded hover:bg-blue-700 transition" >
+              Home
+            </button>
+          </div>
 
           {/* Mode Selector */}
           <div className="flex items-center justify-between bg-gray-50 p-1 rounded-lg border border-gray-200">
@@ -452,7 +494,7 @@ export default function TripSummary() {
                 })}
               </div>
             </div>
-          ) : (
+          ) : ( 
             <div className="flex items-center justify-center h-full text-gray-400 italic">Select a day to view details.</div>
           )}
         </div>
