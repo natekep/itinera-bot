@@ -21,7 +21,7 @@ function AppContainer() {
   const hideNavbarRoutes = ["/login", "/signup", "/onboarding", "/404"];
   const shouldHideNavbar = hideNavbarRoutes.includes(location.pathname);
   const bgClass = isHome
-    ? "bg-[url('../../src/assets/mountain-bkg-img.jpg')] bg-cover"
+    ? "bg-[url('/mountain-bkg-img.jpg')] bg-cover"
     : "bg-[#F2F3F4]";
 
   return (
