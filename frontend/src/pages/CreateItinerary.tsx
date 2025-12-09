@@ -54,9 +54,8 @@ export default function CreateItinerary() {
   const [showSavedModal, setShowSavedModal] = useState(false);
 
   // Approval states
-  const [selections, setSelections] = useState<
-    Record<number, "yes" | "no" | null>
-  >({});
+  type Choice = "yes" | "no" | null;
+  const [selections, setSelections] = useState<Record<string, Choice>>({});
 
   const resetAll = () => {
     // Clear itinerary + food
@@ -161,8 +160,24 @@ export default function CreateItinerary() {
     }
   };
 
+  const geocodeAddress = async (address: string) => {
+    try {
+      const res = await fetch(
+        `http://localhost:8000/geocode?address=${encodeURIComponent(address)}`
+      );
+      const data = await res.json();
+
+      const loc = data.results[0].geometry.location;
+      return { lat: loc.lat, lng: loc.lng };
+    } catch (e) {
+      console.error("Geocode failed:", e);
+      return { lat: null, lng: null };
+    }
+  };
+
   const submitTripQuery = async () => {
     setShowGuestMenu(false);
+    setShowResults(false);
     setLoading(true);
     // Get logged in user
     const {
@@ -277,17 +292,17 @@ export default function CreateItinerary() {
     // Fake bot reply for now
     setMessages((prev) => [
       ...prev,
-      { sender: "bot", text: "Thanks! I'm generating suggestions…" },
+      { sender: "bot", text: "Thanks! I'll make those changes!" },
     ]);
 
     setChatInput("");
   };
 
   // Handle approve event buttons for each card
-  const handleSelect = (index: number, choice: "yes" | "no") => {
+  const handleSelect = (uniqueKey: string, choice: "yes" | "no") => {
     setSelections((prev) => ({
       ...prev,
-      [index]: prev[index] === choice ? null : choice, // toggle off if same choice clicked
+      [uniqueKey]: prev[uniqueKey] === choice ? null : choice,
     }));
   };
 
@@ -311,7 +326,7 @@ export default function CreateItinerary() {
           day: day.date,
           index: itemIndex,
           title: item.title,
-          decision: selections[itemIndex] ?? null,
+          decision: selections[`${day.date}-${itemIndex}`] ?? null,
         }))
       ) ?? [];
 
@@ -407,25 +422,30 @@ export default function CreateItinerary() {
     const dayIdMap = new Map();
     dayRows.forEach((d) => dayIdMap.set(d.date, d.id));
 
-    // 3️⃣ Insert activities for each day
-    const allActivities = itinerary.flatMap((day) =>
-      day.items.map((item, index) => ({
-        day_id: dayIdMap.get(day.date),
-        name: item.title,
-        category: null,
-        location_name: null,
-        location_address: item.address,
-        description: item.explanation,
-        cost: null,
-        start_time: null, // optional, unless you track real start times
-        end_time: null,
-        latitude: null,
-        longitude: null,
-        booking_url: item.url,
-        place_id: null,
-        is_fixed: selections[index] !== "no", // approved OR not explicitly rejected
-      }))
-    );
+    const allActivities = [];
+
+    for (const day of itinerary) {
+      for (const item of day.items) {
+        const coords = await geocodeAddress(item.address);
+
+        allActivities.push({
+          day_id: dayIdMap.get(day.date),
+          name: item.title,
+          category: null,
+          location_name: null,
+          location_address: item.address,
+          description: item.explanation,
+          cost: null,
+          start_time: null,
+          end_time: null,
+          latitude: coords.lat,
+          longitude: coords.lng,
+          booking_url: item.url,
+          place_id: null,
+          is_fixed: true,
+        });
+      }
+    }
 
     const { error: actErr } = await supabase
       .from("activities")
@@ -437,12 +457,44 @@ export default function CreateItinerary() {
       return;
     }
 
+    // 3️⃣ SAVE FOOD OPTIONS
+    if (foodOptions && foodOptions.length > 0) {
+      const foodInsertPayload = [];
+
+      for (const place of foodOptions) {
+        const coords = await geocodeAddress(place.address);
+
+        foodInsertPayload.push({
+          user_id: user.id,
+          itinerary_id: itineraryId,
+          name: place.title,
+          address: place.address,
+          rating: place.rating,
+          price_level: place.priceLevel,
+          url: place.url,
+          explanation: place.explanation,
+          latitude: coords.lat?.toString() ?? null,
+          longitude: coords.lng?.toString() ?? null,
+        });
+      }
+
+      const { error: foodErr } = await supabase
+        .from("food_options")
+        .insert(foodInsertPayload);
+
+      if (foodErr) {
+        console.error(foodErr);
+        alert("Error saving food options");
+        return;
+      }
+    }
+
     setShowSavedModal(true);
 
     setTimeout(() => {
       setShowSavedModal(false);
       navigate(`/tripSummary/${itineraryId}`);
-    }, 2000); // modal visible for 2s
+    }, 1000); // modal visible for 2s
   };
 
   return (
@@ -734,9 +786,13 @@ export default function CreateItinerary() {
               />
               <button
                 onClick={sendMessage}
-                className="bg-gradient-to-r from-[#6fb3ff] to-[#4b8ce8] text-white px-5 py-2 rounded-xl shadow-md hover:shadow-lg hover:from-[#81c2ff] hover:to-[#5d9bf0] transition"
+                className="
+    flex items-center gap-2 
+    bg-[#4b8ce8] text-white px-5 py-2 rounded-full
+    hover:bg-blue-600 hover:shadow-md transition-all duration-200
+  "
               >
-                Send
+                📤 Send
               </button>
             </div>
           </div>
@@ -750,13 +806,18 @@ export default function CreateItinerary() {
                 <button
                   key={tab}
                   onClick={() => setSelectedTab(tab)}
-                  className={`px-5 py-2 rounded-full border text-sm transition ${
-                    selectedTab === tab
-                      ? "bg-[#4b8ce8] text-white border-transparent shadow-md"
-                      : "bg-white/60 text-gray-700 border-[#c7d9f5] hover:bg-white"
-                  }`}
+                  className={`
+    flex items-center gap-2 px-5 py-2 rounded-full text-sm font-medium
+    transition-all duration-200 shadow-sm
+    ${
+      selectedTab === tab
+        ? "bg-[#4b8ce8] text-white shadow-md scale-[1.03]"
+        : "bg-white text-gray-700 border border-gray-300 hover:bg-gray-100 hover:scale-[1.02]"
+    }
+  `}
                 >
-                  {tab === "Food" ? "🍽 Food Options" : tab}
+                  {tab !== "Food" ? "📅" : "🍽️"}{" "}
+                  {tab === "Food" ? "Food Options" : tab}
                 </button>
               ))}
             </div>
@@ -882,12 +943,14 @@ export default function CreateItinerary() {
                             className={`
       px-4 py-1.5 rounded-full text-sm font-medium transition shadow-sm
       ${
-        selections[index] === "yes"
+        selections[`${selectedTab}-${index}`] === "yes"
           ? "bg-green-500 text-white"
           : "bg-gray-200 text-gray-700 hover:bg-green-200 hover:text-green-700"
       }
     `}
-                            onClick={() => handleSelect(index, "yes")}
+                            onClick={() =>
+                              handleSelect(`${selectedTab}-${index}`, "yes")
+                            }
                           >
                             Yes ✔
                           </button>
@@ -897,12 +960,14 @@ export default function CreateItinerary() {
                             className={`
       px-4 py-1.5 rounded-full text-sm font-medium transition shadow-sm
       ${
-        selections[index] === "no"
+        selections[`${selectedTab}-${index}`] === "no"
           ? "bg-red-500 text-white"
           : "bg-gray-200 text-gray-700 hover:bg-red-200 hover:text-red-700"
       }
     `}
-                            onClick={() => handleSelect(index, "no")}
+                            onClick={() =>
+                              handleSelect(`${selectedTab}-${index}`, "no")
+                            }
                           >
                             No ✖
                           </button>
@@ -913,25 +978,38 @@ export default function CreateItinerary() {
             </div>
 
             <div className="flex justify-between items-center mt-5">
+              {/* Regenerate */}
               <button
-                className="bg-gradient-to-r from-[#6fb3ff] to-[#4b8ce8] text-white px-6 py-3 rounded-full shadow-md hover:shadow-lg hover:from-[#81c2ff] hover:to-[#5d9bf0] transition"
+                className="
+      flex items-center gap-2 bg-white text-[#4b8ce8] border border-[#4b8ce8]
+      px-6 py-3 rounded-full hover:bg-[#eaf3ff] hover:shadow-md
+      transition-all duration-200
+    "
                 onClick={regenerateItinerary}
               >
-                Regenerate Itinerary
+                🔄 <span>Regenerate</span>
               </button>
 
+              {/* Restart */}
               <button
                 onClick={resetAll}
-                className="border border-[#c7d9f5] px-6 py-3 rounded-full text-gray-700 bg-white/60 hover:bg-white transition"
+                className="
+      flex items-center gap-2 px-6 py-3 rounded-full text-gray-600
+      border border-gray-300 hover:bg-gray-100 transition-all duration-200
+    "
               >
-                Clear & Restart
+                🧹 <span>Restart</span>
               </button>
 
+              {/* Save */}
               <button
                 onClick={saveFinalItinerary}
-                className="bg-gradient-to-r from-[#6fb3ff] to-[#4b8ce8] text-white px-6 py-3 rounded-full shadow-md hover:shadow-lg hover:from-[#81c2ff] hover:to-[#5d9bf0] transition"
+                className="
+      flex items-center gap-2 bg-[#4b8ce8] text-white px-6 py-3 rounded-full
+      hover:bg-blue-600 hover:shadow-md transition-all duration-200
+    "
               >
-                Save & Continue
+                💾 <span>Save & Continue</span>
               </button>
             </div>
           </div>

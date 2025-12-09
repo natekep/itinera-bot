@@ -6,7 +6,6 @@ import { supabase } from "../supabaseClient";
 import { Car, Footprints, Bike, Bus, Clock, MapPin } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 
-
 const BACKEND_URL = "http://127.0.0.1:8000";
 
 export default function TripSummary() {
@@ -17,9 +16,13 @@ export default function TripSummary() {
   const [itinerary, setItinerary] = useState<any>(null);
   const [activities, setActivities] = useState<any[]>([]);
   const [coords, setCoords] = useState<{ lat: number; lng: number }[]>([]);
-  const [travelTimesMap, setTravelTimesMap] = useState<Record<string, string>>({});
+  const [travelTimesMap, setTravelTimesMap] = useState<Record<string, string>>(
+    {}
+  );
   const [activeDayIndex, setActiveDayIndex] = useState(0);
-  const [travelMode, setTravelMode] = useState<"DRIVE" | "WALK" | "BICYCLE" | "TRANSIT">("DRIVE");
+  const [travelMode, setTravelMode] = useState<
+    "DRIVE" | "WALK" | "BICYCLE" | "TRANSIT"
+  >("DRIVE");
   const [mapLabels, setMapLabels] = useState<string[]>([]);
 
   const GOOGLE_KEY = import.meta.env.VITE_MAP_CLIENT_KEY;
@@ -28,7 +31,11 @@ export default function TripSummary() {
   const formatTime = (isoString: string) => {
     if (!isoString) return "";
     const date = new Date(isoString);
-    return date.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit", hour12: true });
+    return date.toLocaleTimeString([], {
+      hour: "2-digit",
+      minute: "2-digit",
+      hour12: true,
+    });
   };
 
   // Map User Preference String to Google API Constant
@@ -61,7 +68,8 @@ export default function TripSummary() {
     try {
       const { data, error } = await supabase
         .from("itineraries")
-        .select(`
+        .select(
+          `
           id,
           title,
           destination,
@@ -88,7 +96,8 @@ export default function TripSummary() {
               longitude
             )
           )
-        `)
+        `
+        )
         .eq("id", itinerary_id)
         .single();
 
@@ -101,7 +110,9 @@ export default function TripSummary() {
 
       // Sort days and activities
       if (data.itinerary_days) {
-        data.itinerary_days.sort((a: any, b: any) => a.day_number - b.day_number);
+        data.itinerary_days.sort(
+          (a: any, b: any) => a.day_number - b.day_number
+        );
         data.itinerary_days.forEach((day: any) => {
           if (day.activities) {
             day.activities.sort((a: any, b: any) => {
@@ -120,7 +131,9 @@ export default function TripSummary() {
       setItinerary(data);
 
       // Flatten activities for any global calculations you need
-      const flatActivities = data.itinerary_days.flatMap((d: any) => d.activities ?? []);
+      const flatActivities = data.itinerary_days.flatMap(
+        (d: any) => d.activities ?? []
+      );
       setActivities(flatActivities);
 
       // Fetch User Preference for Travel Mode (optional)
@@ -146,7 +159,8 @@ export default function TripSummary() {
 
   const parseDurationFromEntry = (entry: any): number | null => {
     if (!entry) return null;
-    const d = entry.duration ?? entry.durationSeconds ?? entry.durationMeters ?? null;
+    const d =
+      entry.duration ?? entry.durationSeconds ?? entry.durationMeters ?? null;
 
     // If it's a number (seconds)
     if (typeof d === "number") return Math.round(d);
@@ -210,7 +224,12 @@ export default function TripSummary() {
         const origin = acts[i];
         const dest = acts[i + 1];
 
-        if (!origin?.latitude || !origin?.longitude || !dest?.latitude || !dest?.longitude) {
+        if (
+          !origin?.latitude ||
+          !origin?.longitude ||
+          !dest?.latitude ||
+          !dest?.longitude
+        ) {
           map[origin.id] = "N/A";
           continue;
         }
@@ -249,7 +268,8 @@ export default function TripSummary() {
               headers: {
                 "Content-Type": "application/json",
                 "X-Goog-Api-Key": GOOGLE_KEY,
-                "X-Goog-FieldMask": "originIndex,destinationIndex,distanceMeters,duration",
+                "X-Goog-FieldMask":
+                  "originIndex,destinationIndex,distanceMeters,duration",
               },
             }
           );
@@ -289,14 +309,16 @@ export default function TripSummary() {
     return activities.findIndex((a) => a.id === activityId);
   };
 
-   // Export function
+  // Export function
   const exportItinerary = () => {
     if (!itinerary || !itinerary.itinerary_days) return;
 
     let csv = "Day,Activity,Start Time,End Time,Location,Description\n";
     itinerary.itinerary_days.forEach((day: any) => {
       day.activities?.forEach((act: any) => {
-        csv += `${day.day_number},${act.name},${act.start_time || ""},${act.end_time || ""},${act.location_address || ""},${act.description || ""}\n`;
+        csv += `${day.day_number},${act.name},${act.start_time || ""},${
+          act.end_time || ""
+        },${act.location_address || ""},${act.description || ""}\n`;
       });
     });
 
@@ -321,8 +343,6 @@ export default function TripSummary() {
     // compute travel times per day
     computeTravelTimesPerDay();
   }, [itinerary, travelMode]);
-
-
 
   // Update Map and View when Tab Changes
   useEffect(() => {
@@ -359,7 +379,9 @@ export default function TripSummary() {
     );
   }
 
-  const currentDay = itinerary.itinerary_days[activeDayIndex] ?? { activities: [] };
+  const currentDay = itinerary.itinerary_days[activeDayIndex] ?? {
+    activities: [],
+  };
 
   return (
     <div className="flex flex-row h-screen w-screen bg-white overflow-hidden">
@@ -367,7 +389,9 @@ export default function TripSummary() {
       <div className="w-[30%] border-r border-gray-200 flex flex-col h-screen">
         {/* Header Area */}
         <div className="p-6 border-b border-gray-100 bg-white shadow-sm z-10">
-          <h1 className="text-2xl font-bold text-gray-800 mb-1">{itinerary.title}</h1>
+          <h1 className="text-2xl font-bold text-gray-800 mb-1">
+            {itinerary.title}
+          </h1>
 
           <p className="text-grey-500 text-sm mb-6 font-semibold">
             {itinerary.destination} <br />
@@ -376,18 +400,24 @@ export default function TripSummary() {
 
           {/* Print, Export, Home Buttons */}
           <div className="flex gap-3 mb-4">
-            <button onClick={() => window.print()}
-            className="px-5 py-2 bg-blue-500 text-white rounded hover:bg-blue-700 transition" >
+            <button
+              onClick={() => window.print()}
+              className="px-5 py-2 bg-blue-500 text-white rounded hover:bg-blue-700 transition"
+            >
               Print
-            </button> 
+            </button>
 
-            <button onClick={() => exportItinerary()}
-            className="px-5 py-2 bg-blue-500 text-white rounded hover:bg-blue-700 transition" >
+            <button
+              onClick={() => exportItinerary()}
+              className="px-5 py-2 bg-blue-500 text-white rounded hover:bg-blue-700 transition"
+            >
               Export
             </button>
 
-            <button onClick={() => navigate("/")}
-            className="px-5 py-2 bg-blue-500 text-white rounded hover:bg-blue-700 transition" >
+            <button
+              onClick={() => navigate("/")}
+              className="px-5 py-2 bg-blue-500 text-white rounded hover:bg-blue-700 transition"
+            >
               Home
             </button>
           </div>
@@ -395,17 +425,37 @@ export default function TripSummary() {
           {/* Mode Selector */}
           <div className="flex items-center justify-between bg-gray-50 p-1 rounded-lg border border-gray-200">
             {[
-              { mode: "DRIVE", icon: <Car size={26} color='purple'/>, label: "Drive" },
-              { mode: "WALK", icon: <Footprints size={26} color='green' />, label: "Walk" },
-              { mode: "BICYCLE", icon: <Bike size={26} color='red' />, label: "Bike" },
-              { mode: "TRANSIT", icon: <Bus size={26} color='blue' />, label: "Transit" },
+              {
+                mode: "DRIVE",
+                icon: <Car size={26} color="purple" />,
+                label: "Drive",
+              },
+              {
+                mode: "WALK",
+                icon: <Footprints size={26} color="green" />,
+                label: "Walk",
+              },
+              {
+                mode: "BICYCLE",
+                icon: <Bike size={26} color="red" />,
+                label: "Bike",
+              },
+              {
+                mode: "TRANSIT",
+                icon: <Bus size={26} color="blue" />,
+                label: "Transit",
+              },
             ].map((item) => (
               <button
                 key={item.mode}
                 onClick={() => setTravelMode(item.mode as any)}
                 className={`
                   flex-1 flex items-center justify-center gap-2 py-1.5 rounded-md text-s font-semibold transition-all
-                  ${travelMode === item.mode ? "bg-white text-blue-600 shadow-sm ring-1 ring-gray-200" : "text-gray-500 hover:text-gray-700 hover:bg-gray-100"}
+                  ${
+                    travelMode === item.mode
+                      ? "bg-white text-blue-600 shadow-sm ring-1 ring-gray-200"
+                      : "text-gray-500 hover:text-gray-700 hover:bg-gray-100"
+                  }
                 `}
               >
                 {item.icon} {item.label}
@@ -416,11 +466,17 @@ export default function TripSummary() {
 
         {/* Content Area */}
         <div className="flex-1 p-6 bg-gray-50">
-          {currentDay && currentDay.activities && currentDay.activities.length > 0 ? (
+          {currentDay &&
+          currentDay.activities &&
+          currentDay.activities.length > 0 ? (
             <div className="animate-fade-in">
               <div className="flex items-baseline justify-between mb-6 border-b pb-2 border-gray-200">
-                <h2 className="text-xl font-bold text-gray-900">Day {currentDay.day_number}</h2>
-                <span className="text-gray-400 font-medium text-sm">{currentDay.date}</span>
+                <h2 className="text-xl font-bold text-gray-900">
+                  Day {currentDay.day_number}
+                </h2>
+                <span className="text-gray-400 font-medium text-sm">
+                  {currentDay.date}
+                </span>
               </div>
 
               <div className="space-y-8 relative border-l-2 border-blue-100 ml-3 pl-8 pb-4">
@@ -452,15 +508,19 @@ export default function TripSummary() {
                             </div>
                           )}
                         </div>
-                        
+
                         {/* Address */}
-                        {act.location_address &&  (
+                        {act.location_address && (
                           <div className="flex items-center text-gray-600 text-sm mt-2 gap-1">
-                            <MapPin size={16} className="text-red-500 flex-shrink-0" />
+                            <MapPin
+                              size={16}
+                              className="text-red-500 flex-shrink-0"
+                            />
                             <span>
-                              {act.location_address || reverseGeocode(act.latitude, act.longitude)}
+                              {act.location_address ||
+                                reverseGeocode(act.latitude, act.longitude)}
                             </span>
-                         </div>
+                          </div>
                         )}
 
                         {/* Description */}
@@ -472,14 +532,30 @@ export default function TripSummary() {
                         {typeof timeToNext !== "undefined" && (
                           <div className="mt-3 inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-blue-50 border border-blue-100 text-xs font-medium text-blue-700">
                             {timeToNext === "N/A" ? (
-                              <span className="text-gray-400">Time unavailable</span>
+                              <span className="text-gray-400">
+                                Time unavailable
+                              </span>
                             ) : (
                               <>
                                 <span>
-                                  {travelMode === "DRIVE" && <Car size={16} className="text-purple-500" />}
-                                  {travelMode === "WALK" && <Footprints size={16} className="text-green-500" />}
-                                  {travelMode === "BICYCLE" && <Bike size={16} className="text-red-500" />}
-                                  {travelMode === "TRANSIT" && <Bus size={16} className="text-blue-500" />}
+                                  {travelMode === "DRIVE" && (
+                                    <Car
+                                      size={16}
+                                      className="text-purple-500"
+                                    />
+                                  )}
+                                  {travelMode === "WALK" && (
+                                    <Footprints
+                                      size={16}
+                                      className="text-green-500"
+                                    />
+                                  )}
+                                  {travelMode === "BICYCLE" && (
+                                    <Bike size={16} className="text-red-500" />
+                                  )}
+                                  {travelMode === "TRANSIT" && (
+                                    <Bus size={16} className="text-blue-500" />
+                                  )}
                                 </span>
                                 <span>
                                   To next stop: <strong>{timeToNext}</strong>
@@ -494,8 +570,10 @@ export default function TripSummary() {
                 })}
               </div>
             </div>
-          ) : ( 
-            <div className="flex items-center justify-center h-full text-gray-400 italic">Select a day to view details.</div>
+          ) : (
+            <div className="flex items-center justify-center h-full text-gray-400 italic">
+              Select a day to view details.
+            </div>
           )}
         </div>
       </div>
@@ -504,7 +582,9 @@ export default function TripSummary() {
       <div className="flex-1 flex flex-col overflow-hidden ">
         {/* Day Tabs */}
         <div className="bg-white px-6 py-4 border-b border-gray-200 shadow-sm z-10">
-          <h3 className="text-xs font-bold text-gray-400 uppercase tracking-wider mb-2">Select Day</h3>
+          <h3 className="text-xs font-bold text-gray-400 uppercase tracking-wider mb-2">
+            Select Day
+          </h3>
           <div className="flex gap-3 no-scrollbar pb-1">
             {itinerary.itinerary_days.map((day: any, index: number) => (
               <button
@@ -512,7 +592,11 @@ export default function TripSummary() {
                 onClick={() => setActiveDayIndex(index)}
                 className={`
                   px-5 py-2 rounded-lg text-sm font-semibold transition-all duration-200 whitespace-nowrap border
-                  ${activeDayIndex === index ? "bg-gray-900 text-white border-gray-900 shadow-md transform scale-105" : "bg-white text-gray-600 border-gray-300 hover:bg-gray-50 hover:border-gray-400"}
+                  ${
+                    activeDayIndex === index
+                      ? "bg-gray-900 text-white border-gray-900 shadow-md transform scale-105"
+                      : "bg-white text-gray-600 border-gray-300 hover:bg-gray-50 hover:border-gray-400"
+                  }
                 `}
               >
                 Day {day.day_number}
