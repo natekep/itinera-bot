@@ -394,7 +394,11 @@ const Profile = () => {
                           </p>
                           <Link
                             to={`/edit/${itinerary.id}`}
-                            className="text-[#81b4fa] hover:underline text-xs font-medium"
+                            className="
+                              inline-block mt-2 px-3 py-1.5 rounded-lg text-xs font-semibold
+                              bg-gradient-to-r from-[#6fb3ff] to-[#4b8ce8] text-white
+                              shadow-sm hover:shadow-md transition hover:scale-105
+                            "
                           >
                             Edit Itinerary
                           </Link>

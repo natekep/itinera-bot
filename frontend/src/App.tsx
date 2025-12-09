@@ -21,20 +21,22 @@ function AppContainer() {
   const isHome = location.pathname === "/";
   const hideNavbarRoutes = ["/login", "/signup", "/onboarding", "/404"];
   const shouldHideNavbar = hideNavbarRoutes.includes(location.pathname);
+  const isFixedPage =
+    location.pathname.startsWith("/create") ||
+    location.pathname.startsWith("/edit");
+
   const bgClass = isHome
     ? "bg-[url('/mountain-bkg-img.jpg')] bg-cover"
     : "bg-[#F2F3F4]";
 
   return (
-    <div
-      className={`${bgClass} ${
-        isHome
-          ? "h-screen overflow-hidden flex flex-col"
-          : "h-calc(100vh-101px) overflow-hidden flex flex-col"
-      }`}
-    >
+    <div className={`${bgClass} h-screen overflow-hidden flex flex-col`}>
       {!shouldHideNavbar && <Navbar />}
-      <div className="flex-1 overflow-hidden">
+      <div
+        className={`flex-1 ${
+          isFixedPage ? "overflow-hidden" : "overflow-y-auto"
+        }`}
+      >
         <Routes>
           <Route path="/" element={<Home />} />
           <Route path="/signup" element={<SignUp />} />

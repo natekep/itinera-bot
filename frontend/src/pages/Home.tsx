@@ -5,7 +5,7 @@ import type { Session } from "@supabase/supabase-js";
 
 export default function Home() {
   const [session, setSession] = useState<Session | null>(null);
-  
+
   useEffect(() => {
     supabase.auth.getSession().then(({ data: { session } }) => {
       setSession(session);
@@ -20,25 +20,20 @@ export default function Home() {
     return () => subscription.unsubscribe();
   }, []);
 
-  const scrollToAbout = () => {
-    document.getElementById('about-section')?.scrollIntoView({ 
-      behavior: 'smooth' 
-    });
-  };
-
   return (
-    <> 
+    <>
       {/* Hero Section - The parent div for the indicator must be relative */}
       <div className="min-h-screen relative">
-        
         <div className="min-h-screen flex flex-col justify-end pb-32 mx-[5%]">
           <h1 className="text-white xl:text-8xl text-6xl font-bold">
-            Pack your bags, let's go <br/>somewhere amazing
+            Pack your bags, let's go <br />
+            somewhere amazing
           </h1>
           <div className="flex justify-between mt-[2%]">
             <p className="text-white text-xl opacity-90">
               Hidden gems, breathtaking views, unforgettable adventures—where
-              <br/>will you go next?
+              <br />
+              will you go next?
             </p>
             <Link to={session ? "/create" : "/signup"}>
               <button className="bg-white text-black border border-white py-4 px-8 rounded-full hover:bg-transparent hover:text-white transition-all duration-300 font-medium">
@@ -47,34 +42,13 @@ export default function Home() {
             </Link>
           </div>
         </div>
-        
-        {/* Scroll Indicator - Now positioned ABSOLUTELY */}
-        <button
-          onClick={scrollToAbout}
-          className="absolute bottom-30 left-1/2 transform -translate-x-1/2 text-white z-10 opacity-80 hover:opacity-100"
-          aria-label="Scroll to about section"
-        >
-          <div className="flex flex-col items-center">
-            <span className="text-sm mb-2 opacity-70 drop-shadow-lg">About Us</span>
-            <svg 
-              className="w-6 h-6 drop-shadow-lg" 
-              fill="none" 
-              stroke="currentColor" 
-              viewBox="0 0 24 24"
-            >
-              <path 
-                strokeLinecap="round" 
-                strokeLinejoin="round" 
-                strokeWidth={2} 
-                d="M19 14l-7 7m0 0l-7-7m7 7V3" 
-              />
-            </svg>
-          </div>
-        </button>
       </div>
 
       {/* About Section */}
-      <section id="about-section" className="min-h-screen bg-gradient-to-b from-slate-900 to-slate-800 py-20">
+      <section
+        id="about-section"
+        className="min-h-screen bg-gradient-to-b from-slate-900 to-slate-800 py-20"
+      >
         <div className="max-w-7xl mx-auto px-[5%]">
           {/* Section Title */}
           <div className="text-center mb-16">
@@ -87,10 +61,11 @@ export default function Home() {
           {/* Main Description */}
           <div className="bg-white/10 backdrop-blur-md rounded-3xl p-10 mb-16 border border-white/20">
             <p className="text-xl xl:text-2xl text-white/90 text-center leading-relaxed">
-              Itinera is your AI-powered travel companion that creates personalized, 
-              real-time itineraries based on your budget, destination, and preferences. 
-              By integrating data on attractions, personal interests, and travel times, it crafts 
-              balanced daily schedules and explains each recommendation.
+              Itinera is your AI-powered travel companion that creates
+              personalized, real-time itineraries based on your budget,
+              destination, and preferences. By integrating data on attractions,
+              personal interests, and travel times, it crafts balanced daily
+              schedules and explains each recommendation.
             </p>
           </div>
 
@@ -103,8 +78,8 @@ export default function Home() {
                   Conversational Flexibility
                 </h3>
                 <p className="text-white/70">
-                  Chat naturally in your own words. No rigid forms or limited options—just 
-                  tell us what you want, and we'll understand.
+                  Chat naturally in your own words. No rigid forms or limited
+                  options—just tell us what you want, and we'll understand.
                 </p>
               </div>
             </div>
@@ -116,8 +91,9 @@ export default function Home() {
                   Smart Constraints
                 </h3>
                 <p className="text-white/70">
-                  Respects your budget, time, and personal interests. Every itinerary is 
-                  tailored to work within your real-world limitations.
+                  Respects your budget, time, and personal interests. Every
+                  itinerary is tailored to work within your real-world
+                  limitations.
                 </p>
               </div>
             </div>
@@ -129,8 +105,8 @@ export default function Home() {
                   Transparent Choices
                 </h3>
                 <p className="text-white/70">
-                  Know exactly why each activity made the cut. We explain our recommendations 
-                  so you can travel with confidence.
+                  Know exactly why each activity made the cut. We explain our
+                  recommendations so you can travel with confidence.
                 </p>
               </div>
             </div>
@@ -146,22 +122,28 @@ export default function Home() {
                 <div className="flex items-start space-x-3">
                   <span className="text-teal-400 text-xl">→</span>
                   <p className="text-white/80">
-                    <span className="font-semibold text-white">Real-time planning:</span> Generate 
-                    same-day itineraries right after landing
+                    <span className="font-semibold text-white">
+                      Real-time planning:
+                    </span>{" "}
+                    Generate same-day itineraries right after landing
                   </p>
                 </div>
                 <div className="flex items-start space-x-3">
                   <span className="text-teal-400 text-xl">→</span>
                   <p className="text-white/80">
-                    <span className="font-semibold text-white">Weather-aware:</span> Automatically 
-                    adjusts outdoor activities based on forecasts
+                    <span className="font-semibold text-white">
+                      Weather-aware:
+                    </span>{" "}
+                    Automatically adjusts outdoor activities based on forecasts
                   </p>
                 </div>
                 <div className="flex items-start space-x-3">
                   <span className="text-teal-400 text-xl">→</span>
                   <p className="text-white/80">
-                    <span className="font-semibold text-white">Local insights:</span> Discover 
-                    hidden gems and unique experiences
+                    <span className="font-semibold text-white">
+                      Local insights:
+                    </span>{" "}
+                    Discover hidden gems and unique experiences
                   </p>
                 </div>
               </div>
@@ -169,22 +151,28 @@ export default function Home() {
                 <div className="flex items-start space-x-3">
                   <span className="text-purple-400 text-xl">→</span>
                   <p className="text-white/80">
-                    <span className="font-semibold text-white">Smart routing:</span> Optimized 
-                    travel times between attractions
+                    <span className="font-semibold text-white">
+                      Smart routing:
+                    </span>{" "}
+                    Optimized travel times between attractions
                   </p>
                 </div>
                 <div className="flex items-start space-x-3">
                   <span className="text-purple-400 text-xl">→</span>
                   <p className="text-white/80">
-                    <span className="font-semibold text-white">Multi-day trips:</span> Seamlessly 
-                    plan entire vacations with balanced schedules
+                    <span className="font-semibold text-white">
+                      Multi-day trips:
+                    </span>{" "}
+                    Seamlessly plan entire vacations with balanced schedules
                   </p>
                 </div>
                 <div className="flex items-start space-x-3">
                   <span className="text-purple-400 text-xl">→</span>
                   <p className="text-white/80">
-                    <span className="font-semibold text-white">Budget-conscious:</span> Find 
-                    amazing experiences within your price range
+                    <span className="font-semibold text-white">
+                      Budget-conscious:
+                    </span>{" "}
+                    Find amazing experiences within your price range
                   </p>
                 </div>
               </div>

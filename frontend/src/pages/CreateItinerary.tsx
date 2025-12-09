@@ -447,7 +447,7 @@ export default function CreateItinerary() {
 
   return (
     <div
-      className="flex flex-col h-[calc(100vh-101px)] 
+      className="flex flex-col h-full 
   bg-gradient-to-br from-[#b4d6ff] via-[#dceeff] to-white"
     >
       <div className="flex justify-center mt-10">
@@ -702,7 +702,7 @@ export default function CreateItinerary() {
 
       {showResults && (
         <div className="flex justify-between mx-10 mt-5">
-          <div className="mt-3 bg-white shadow-xl rounded-2xl w-[35%] p-6 h-[65vh] flex flex-col">
+          <div className="mt-3 bg-white/50 backdrop-blur-xl rounded-2xl w-[35%] p-6 h-[65vh] flex flex-col shadow-lg border border-white/30">
             <h2 className="text-xl font-semibold text-gray-800">
               Plan Your Activities
             </h2>
@@ -710,7 +710,7 @@ export default function CreateItinerary() {
               Tell me what you'd like to do on your trip. Mention specific
               activities, interests, or places you want to visit.
             </p>
-            <div className="flex-1 bg-gray-50 rounded-xl mt-4 p-4 overflow-y-auto space-y-4">
+            <div className="flex-1 bg-white/40 rounded-xl mt-4 p-4 overflow-y-auto space-y-4">
               {messages.map((msg, i) => (
                 <div
                   key={i}
@@ -730,18 +730,18 @@ export default function CreateItinerary() {
                 value={chatInput}
                 onChange={(e) => setChatInput(e.target.value)}
                 placeholder="E.g., I want to play tennis, visit jazz bars..."
-                className="flex-1 border border-gray-300 rounded-xl px-4 py-2 text-sm focus:ring-2 focus:ring-blue-300 focus:outline-none"
+                className="flex-1 border border-[#c7d9f5] rounded-xl px-4 py-2 text-sm bg-white/40 backdrop-blur-sm focus:ring-2 focus:ring-[#81b4fa] focus:outline-none"
               />
               <button
                 onClick={sendMessage}
-                className="bg-[#4b8ce8] text-white px-5 py-2 rounded-xl hover:bg-blue-600 transition"
+                className="bg-gradient-to-r from-[#6fb3ff] to-[#4b8ce8] text-white px-5 py-2 rounded-xl shadow-md hover:shadow-lg hover:from-[#81c2ff] hover:to-[#5d9bf0] transition"
               >
                 Send
               </button>
             </div>
           </div>
 
-          <div className="mt-3 bg-white shadow-xl rounded-2xl w-[62%] p-6 h-[65vh] flex flex-col">
+          <div className="mt-3 bg-white/50 backdrop-blur-xl rounded-2xl w-[62%] p-6 h-[65vh] flex flex-col shadow-lg border border-white/30">
             <h2 className="text-2xl font-semibold text-gray-800">
               Your Itinerary
             </h2>
@@ -750,10 +750,10 @@ export default function CreateItinerary() {
                 <button
                   key={tab}
                   onClick={() => setSelectedTab(tab)}
-                  className={`px-5 py-2 rounded-full border text-sm ${
+                  className={`px-5 py-2 rounded-full border text-sm transition ${
                     selectedTab === tab
-                      ? "bg-[#4b8ce8] text-white border-transparent"
-                      : "bg-white text-gray-700 border-gray-300"
+                      ? "bg-[#4b8ce8] text-white border-transparent shadow-md"
+                      : "bg-white/60 text-gray-700 border-[#c7d9f5] hover:bg-white"
                   }`}
                 >
                   {tab === "Food" ? "🍽 Food Options" : tab}
@@ -774,7 +774,7 @@ export default function CreateItinerary() {
                   {foodOptions?.map((place: any, idx: number) => (
                     <div
                       key={idx}
-                      className="bg-white rounded-2xl p-6 border border-gray-200 shadow-sm hover:shadow-md transition"
+                      className="bg-white/70 rounded-2xl p-6 border border-white/50 shadow-sm hover:shadow-md transition"
                     >
                       {/* Top Row: Icon + Name */}
                       <div className="flex items-center gap-3">
@@ -837,7 +837,7 @@ export default function CreateItinerary() {
                   ?.items.map((item: any, index: number) => (
                     <div
                       key={index}
-                      className="bg-white rounded-xl p-5 border border-gray-200 shadow-sm hover:shadow-md transition"
+                      className="bg-white/70 rounded-xl p-5 border border-white/50 shadow-sm hover:shadow-md transition"
                     >
                       {/* Time */}
                       <p className="text-sm font-semibold text-orange-500">
@@ -914,7 +914,7 @@ export default function CreateItinerary() {
 
             <div className="flex justify-between items-center mt-5">
               <button
-                className="bg-[#4b8ce8] text-white px-6 py-3 rounded-full hover:bg-blue-600 transition"
+                className="bg-gradient-to-r from-[#6fb3ff] to-[#4b8ce8] text-white px-6 py-3 rounded-full shadow-md hover:shadow-lg hover:from-[#81c2ff] hover:to-[#5d9bf0] transition"
                 onClick={regenerateItinerary}
               >
                 Regenerate Itinerary
@@ -922,14 +922,14 @@ export default function CreateItinerary() {
 
               <button
                 onClick={resetAll}
-                className="border border-gray-300 px-6 py-3 rounded-full text-gray-700 hover:bg-gray-100 transition"
+                className="border border-[#c7d9f5] px-6 py-3 rounded-full text-gray-700 bg-white/60 hover:bg-white transition"
               >
                 Clear & Restart
               </button>
 
               <button
                 onClick={saveFinalItinerary}
-                className="bg-[#4b8ce8] text-white px-6 py-3 rounded-full hover:bg-blue-600 transition"
+                className="bg-gradient-to-r from-[#6fb3ff] to-[#4b8ce8] text-white px-6 py-3 rounded-full shadow-md hover:shadow-lg hover:from-[#81c2ff] hover:to-[#5d9bf0] transition"
               >
                 Save & Continue
               </button>
