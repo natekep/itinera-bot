@@ -367,7 +367,7 @@ export default function EditItinerary() {
 
     setTimeout(() => {
       setShowSavedModal(false);
-      navigate(`/bookings/${itinerary_id}`);
+      navigate(`/tripSummary/${itinerary_id}`);
     }, 2000);
   };
 
