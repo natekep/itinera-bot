@@ -76,6 +76,7 @@ class UserProfile(BaseModel):
     preferred_pace: str
     interests: str
     diet_preferences: str
+    food_preferences: str
     accessibility: str
     budget: str
 
@@ -90,6 +91,7 @@ class ItineraryEvent(BaseModel):
     rating: Optional[float]
     priceLevel: Optional[str]
     url: Optional[str]
+    time_is_fixed: bool
 
 
 class FoodPlace(BaseModel):
@@ -230,6 +232,7 @@ def get_user_onboarding_profile(user_id: str):
                 preferred_pace=user["preferred_pace"],
                 interests=user["interests"],
                 diet_preferences=user["dietary_restrictions"],
+                food_preferences=user["food_preferences"],
                 accessibility=user["accessibility"],
                 budget=user["budget_range"],
             )
@@ -258,8 +261,10 @@ def normalize_google_events(data):
                 rating=place.get("rating"),
                 priceLevel=place.get("priceLevel"),
                 url=place.get("googleMapsUri"),
+                time_is_fixed=False,
             )
         )
+
     return normalized_events
 
 
@@ -385,6 +390,7 @@ def normalize_ticketmaster_events(data):
                 rating=None,
                 priceLevel=None,
                 url=event.get("url"),
+                time_is_fixed=True,
             )
         )
 
@@ -411,7 +417,7 @@ def normalize_food_place(data):
 
 
 # Call Google Places api for food options
-def get_food_options(destination: str):
+def get_food_options(destination: str, food_preferences: str):
     google_places_url = "https://places.googleapis.com/v1/places:searchText"
 
     google_restaurants = {}
@@ -423,10 +429,12 @@ def get_food_options(destination: str):
     }
 
     food_categories = ["restaurants", "cafes", "bars", "dessert shops"]
+    for pref in food_preferences.split(","):
+        food_categories.append(pref)
 
     for food_spot in food_categories:
         query = f"best {food_spot} near {destination}"
-        payload = {"textQuery": query, "maxResultCount": 10}
+        payload = {"textQuery": query, "maxResultCount": 5}
 
         response = requests.post(google_places_url, headers=headers, json=payload)
         if response.ok:
@@ -506,7 +514,8 @@ You MUST output JSON following exactly this structure:
       "date": "YYYY-MM-DD",
       "items": [
         {
-          "time": "HH:MM AM/PM",
+          "time": "the exact time provided in the input JSON if the event already includes a time otherwise, use a reasonable time according to the event (nightlife in the night, attractions during hours its open, etcetra),
+          "time_is_fixed": true | false,
           "title": "...",
           "type": "event",
           "source": "Google" | "Ticketmaster",
@@ -566,9 +575,33 @@ GUEST RULES
     - “Because your group includes a pet, I chose an open-air attraction suitable for animals.”
 
 --------------------------------------------------
+EVENT TIMING RULES (STRICT)
+--------------------------------------------------
+24. If an event in the input JSON has "time_is_fixed": true,
+you MUST copy the time EXACTLY as provided in the input JSON.
+
+You are NOT allowed to:
+- convert time formats,
+- modify times,
+- reschedule times,
+- convert "19:00" into "7:00 PM",
+- or adjust the time for pacing.
+
+If time_is_fixed = true, the output time MUST 100% match the input time string.
+
+25. You are NOT allowed to invent new times, reschedule events, or adjust times 
+    for convenience. Ticketmaster event times MUST be used exactly as provided.
+
+26. If an event has no time, you may assign a reasonable morning/afternoon/evening 
+    time slot — but ONLY for events without a provided time.
+
+27. NEVER rewrite or modify the time of a Ticketmaster event or a Google event that 
+    includes a time value in the JSON.
+
+--------------------------------------------------
 OUTPUT RULES
 --------------------------------------------------
-24. Return ONLY the JSON output — no commentary, no markdown, no natural language.
+28. Return ONLY the JSON output — no commentary, no markdown, no natural language.
 """
 
 
@@ -583,6 +616,13 @@ def generate_itinerary(trip: TripDetails):
     tm_events = get_ticketmaster_events(
         trip.destination, trip.start_date, trip.end_date
     )
+    for ev in tm_events:
+        pretty_print_event(ev)
+
+    for category, events in google_places_events.items():
+        print(f"\n--- GOOGLE CATEGORY: {category} ---")
+        for ev in events:
+            pretty_print_event(ev)
 
     llm_payload = {
         "trip_details": trip.dict(),
@@ -768,7 +808,7 @@ You MUST output JSON following exactly this structure:
 TONE & EXPLANATIONS
 --------------------------------------------------
 8. Explanations MUST be warm, friendly, and conversational — like a human travel agent.
-9. Every explanation MUST reference at least one:
+9. Every explanation MUST reference at least two:
    - dietary match,
    - budget fit,
    - group suitability (good for families, couples, pet-friendly, etc.),
@@ -786,7 +826,12 @@ OUTPUT RULES
 @app.post("/generate-food")
 def generate_food(trip: TripDetails):
     user_profile = get_user_onboarding_profile(trip.user_id)
-    restaurants = get_food_options(trip.destination)
+    restaurants = get_food_options(trip.destination, user_profile.food_preferences)
+
+    for category, places in restaurants.items():
+        print(f"\n=== CATEGORY: {category} ===\n")
+        for place in places:
+            pretty_print_food_place(place)
 
     payload = {
         "trip_details": trip.dict(),
@@ -928,7 +973,11 @@ def regenerate_itinerary(req: RegenerateRequest):
 def geocode(address: str):
     if not address:
         raise HTTPException(status_code=400, detail="Address is required")
-    url = f"https://maps.googleapis.com/maps/api/geocode/json?address={address}&key={os.getenv('GOOGLE_API_KEY')}"
+
+    from urllib.parse import urlencode
+
+    params = urlencode({"address": address, "key": os.getenv("GOOGLE_PLACES_API_KEY")})
+    url = f"https://maps.googleapis.com/maps/api/geocode/json?{params}"
     res = requests.get(url)
 
     if res.status_code != 200:
