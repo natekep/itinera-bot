@@ -1,1 +1,40 @@
 @import "tailwindcss";
+@keyframes planeFlight {
+  0%   { transform: translateX(-60px) translateY(20px) rotate(-10deg); opacity: 0; }
+  20%  { opacity: 1; }
+  50%  { transform: translateX(40px) translateY(-10px) rotate(5deg); }
+  80%  { opacity: 1; }
+  100% { transform: translateX(120px) translateY(10px) rotate(0deg); opacity: 0; }
+}
+
+.animate-planeFlight {
+  animation: planeFlight 2s ease-in-out infinite;
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; transform: scale(0.95); }
+  to   { opacity: 1; transform: scale(1); }
+}
+
+.animate-fadeIn {
+  animation: fadeIn 0.5s ease-out forwards;
+}
+
+@keyframes fadeIn {
+  from { opacity: 0 }
+  to { opacity: 1 }
+}
+
+@keyframes scaleIn {
+  from { transform: scale(0.9) }
+  to { transform: scale(1) }
+}
+
+.animate-fadeIn {
+  animation: fadeIn 0.25s ease-out forwards;
+}
+
+.animate-scaleIn {
+  animation: scaleIn 0.25s ease-out forwards;
+}
+
