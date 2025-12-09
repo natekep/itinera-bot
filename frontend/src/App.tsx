@@ -27,7 +27,7 @@ function AppContainer() {
   return (
     <div
       className={`${bgClass} ${
-        isHome ? "h-screen overflow-hidden" : "min-h-screen"
+        isHome ? "h-screen overflow-auto" : "min-h-screen"
       }`}
     >
       {!shouldHideNavbar && <Navbar />}

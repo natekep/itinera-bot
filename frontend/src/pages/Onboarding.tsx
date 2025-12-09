@@ -15,7 +15,6 @@ import {
   Loader2,
   X,
   Plus,
-  // New icons for accessibility
   Armchair,
   Footprints,
   Volume2,
