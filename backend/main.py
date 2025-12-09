@@ -2,6 +2,7 @@ import os
 import time
 import requests
 import uvicorn
+from datetime import datetime
 from fastapi import FastAPI, Query, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
@@ -59,6 +60,11 @@ class TripDetails(BaseModel):
     start_date: str
     end_date: str
     num_guests: str
+
+
+class FetchItineraryRequest(BaseModel):
+    user_id: str
+    itinerary_id: int
 
 
 class UserProfile(BaseModel):
@@ -419,7 +425,6 @@ def get_food_options(destination: str):
     food_categories = ["restaurants", "cafes", "bars", "dessert shops"]
 
     for food_spot in food_categories:
-
         query = f"best {food_spot} near {destination}"
         payload = {"textQuery": query, "maxResultCount": 10}
 
@@ -569,7 +574,6 @@ OUTPUT RULES
 
 @app.post("/generate-itinerary")
 def generate_itinerary(trip: TripDetails):
-
     user_profile = get_user_onboarding_profile(trip.user_id)
     user_interests = user_profile.interests.split(",")
 
@@ -612,6 +616,112 @@ def generate_itinerary(trip: TripDetails):
         raise HTTPException(status_code=500, detail="Invalid JSON returned by LLM")
 
     return itinerary
+
+
+@app.post("/fetch-itinerary")
+def fetch_itinerary(request: FetchItineraryRequest):
+    """
+    Fetch a complete itinerary with all days and activities for a given user and itinerary ID.
+    Returns the itinerary in a structured format with days and items.
+    """
+    user_id = request.user_id
+    itinerary_id = request.itinerary_id
+
+    # Step 1: Verify the itinerary exists and belongs to the user
+    try:
+        itinerary_response = (
+            supabase.from_("itineraries")
+            .select("*")
+            .eq("id", itinerary_id)
+            .eq("user_id", user_id)
+            .single()
+            .execute()
+        )
+        if not itinerary_response.data:
+            raise HTTPException(
+                status_code=404,
+                detail="Itinerary not found or does not belong to this user.",
+            )
+    except Exception as e:
+        print(f"Error fetching itinerary: {e}")
+        raise HTTPException(
+            status_code=404,
+            detail="Itinerary not found or does not belong to this user.",
+        )
+
+    # Step 2: Fetch all days for this itinerary
+    days_response = (
+        supabase.from_("itinerary_days")
+        .select("*")
+        .eq("itinerary_id", itinerary_id)
+        .order("day_number")
+        .execute()
+    )
+    days = days_response.data or []
+
+    if not days:
+        return {"itinerary": []}
+
+    # Step 3: Fetch all activities for all days in one query
+    day_ids = [day["id"] for day in days]
+    activities_response = (
+        supabase.from_("activities")
+        .select("*")
+        .in_("day_id", day_ids)
+        .order("start_time")
+        .execute()
+    )
+    activities = activities_response.data or []
+
+    # Step 4: Group activities by day_id
+    activities_by_day = {}
+    for activity in activities:
+        day_id = activity["day_id"]
+        if day_id not in activities_by_day:
+            activities_by_day[day_id] = []
+        activities_by_day[day_id].append(activity)
+
+    # Step 5: Build the response structure
+    itinerary_result = []
+    for day in days:
+        day_activities = activities_by_day.get(day["id"], [])
+
+        items = []
+        for activity in day_activities:
+            # Format the time from start_time if available
+            time_str = None
+            if activity.get("start_time"):
+                try:
+                    dt = datetime.fromisoformat(
+                        activity["start_time"].replace("Z", "+00:00")
+                    )
+                    time_str = dt.strftime("%I:%M %p").lstrip("0")
+                except ValueError:
+                    time_str = None
+
+            items.append(
+                {
+                    "time": time_str,
+                    "title": activity.get("name")
+                    or activity.get("location_name")
+                    or "Untitled",
+                    "type": "event",
+                    "source": activity.get("category") or "Unknown",
+                    "address": activity.get("location_address") or "",
+                    "url": activity.get("booking_url") or "",
+                    "explanation": activity.get("description") or "",
+                }
+            )
+
+        itinerary_result.append(
+            {
+                "day_id": day.get("day_number") or day["id"],
+                "date": day.get("date"),
+                "items": items,
+            }
+        )
+
+    return {"itinerary": itinerary_result}
 
 
 LLM_PROMPT_FOOD = """
@@ -759,7 +869,6 @@ DO NOT return markdown or commentary.
 
 @app.post("/regenerate-itinerary")
 def regenerate_itinerary(req: RegenerateRequest):
-
     # STEP 1 — Get the user's onboarding profile
     user_profile = get_user_onboarding_profile(req.user_id)
     user_interests = user_profile.interests.split(",")

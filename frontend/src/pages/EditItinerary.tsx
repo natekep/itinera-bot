@@ -1,17 +1,14 @@
-import { Search } from "lucide-react";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { supabase } from "../supabaseClient";
-import { useNavigate } from "react-router-dom";
-import DatePicker from "react-datepicker";
+import { useNavigate, useParams } from "react-router-dom";
 import "react-datepicker/dist/react-datepicker.css";
+import type { User } from "@supabase/supabase-js";
 
-export default function CreateItinerary() {
+export default function EditItinerary() {
+  const { itinerary_id } = useParams();
   const navigate = useNavigate();
 
   // Trip Query Details
-  const [locationAutocomplete, setLocationAutocomplete] = useState<string[]>(
-    []
-  );
   const [destination, setDestination] = useState("");
   const [checkInDate, setCheckInDate] = useState<Date | null>(null);
   const [checkOutDate, setCheckOutDate] = useState<Date | null>(null);
@@ -52,11 +49,103 @@ export default function CreateItinerary() {
   const [showResults, setShowResults] = useState(false);
   const [loading, setLoading] = useState(false);
   const [showSavedModal, setShowSavedModal] = useState(false);
+  const [user, setUser] = useState<User | null>(null);
 
   // Approval states
   const [selections, setSelections] = useState<
     Record<number, "yes" | "no" | null>
   >({});
+
+  const fetchItinerary = async (userId: string) => {
+    setLoading(true);
+
+    const response = await fetch("http://localhost:8000/fetch-itinerary", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        itinerary_id,
+        user_id: userId,
+      }),
+    });
+
+    const result = await response.json();
+    console.log("FETCHED ITINERARY:", result);
+
+    if (!result || !result.itinerary || result.itinerary.length === 0) {
+      throw new Error("No itinerary found");
+    }
+
+    const sortedDays = [...result.itinerary].sort(
+      (a, b) => new Date(a.date).getTime() - new Date(b.date).getTime()
+    );
+    const firstDate = new Date(sortedDays[0].date);
+    const lastDate = new Date(sortedDays[sortedDays.length - 1].date);
+
+    setCheckInDate(firstDate);
+    setCheckOutDate(lastDate);
+    setItinerary(result.itinerary);
+
+    const loadedDates = result.itinerary.map((d: any) => d.date);
+    setTabs([...loadedDates, "Food"]);
+    setSelectedTab(loadedDates[0]);
+    setShowResults(true);
+    setLoading(false);
+    // Return dates so fetchFood can use them immediately
+    return { firstDate, lastDate };
+  };
+
+  const fetchFood = async (userId: string, startDate: Date, endDate: Date) => {
+    const foodResponse = await fetch("http://localhost:8000/generate-food", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        user_id: userId,
+        destination: destination,
+        start_date: startDate,
+        end_date: endDate,
+        num_guests: `${guests.adults} adults, ${guests.children} children, ${guests.infants} infants, ${guests.pets} pets`,
+      }),
+    });
+
+    const foodResult = await foodResponse.json();
+    console.log("FOOD:", foodResult);
+    setFoodOptions(foodResult.food_recommendations);
+  };
+
+  useEffect(() => {
+    const initUser = async () => {
+      const {
+        data: { user: authUser },
+      } = await supabase.auth.getUser();
+
+      if (!authUser) {
+        alert("User is not logged in!");
+        return;
+      }
+      setUser(authUser);
+    };
+
+    initUser();
+  }, []);
+
+  useEffect(() => {
+    if (!user) return;
+
+    const loadData = async () => {
+      setLoading(true);
+      try {
+        const { firstDate, lastDate } = await fetchItinerary(user.id);
+        await fetchFood(user.id, firstDate, lastDate);
+      } catch (error) {
+        console.error(error);
+        alert("Error loading itinerary");
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    loadData();
+  }, [user]);
 
   const resetAll = () => {
     // Clear itinerary + food
@@ -87,146 +176,6 @@ export default function CreateItinerary() {
 
     // Hide guest menu if open
     setShowGuestMenu(false);
-  };
-
-  type GooglePlacesAutocompleteResponse = {
-    suggestions: {
-      placePrediction: {
-        text: { text: string };
-      };
-    }[];
-  };
-
-  // Google Places Autocomplete
-  const handleLocationAutocomplete = async (
-    e: React.ChangeEvent<HTMLInputElement>
-  ) => {
-    setDestination(e.target.value);
-    const res = await fetch(
-      "https://places.googleapis.com/v1/places:autocomplete",
-      {
-        method: "POST",
-        body: JSON.stringify({
-          input: e.target.value,
-          includedPrimaryTypes: "(cities)",
-        }),
-        headers: {
-          "Content-Type": "application/json",
-          "X-Goog-Api-Key": import.meta.env.VITE_MAP_CLIENT_KEY,
-        },
-      }
-    );
-
-    const data: GooglePlacesAutocompleteResponse = await res.json();
-    console.log(data);
-    const locationPredictions = data.suggestions.map(
-      (s) => s.placePrediction.text.text
-    );
-    console.log(locationPredictions);
-    setLocationAutocomplete(locationPredictions);
-  };
-
-  const updateGuests = (label: String, delta: number) => {
-    if (label === "adults") {
-      setGuests({
-        adults: Math.max(0, guests.adults + delta),
-        children: guests.children,
-        infants: guests.infants,
-        pets: guests.pets,
-      });
-    }
-    if (label === "children") {
-      setGuests({
-        adults: guests.adults,
-        children: Math.max(0, guests.children + delta),
-        infants: guests.infants,
-        pets: guests.pets,
-      });
-    }
-    if (label === "infants") {
-      setGuests({
-        adults: guests.adults,
-        children: guests.children,
-        infants: Math.max(0, guests.infants + delta),
-        pets: guests.pets,
-      });
-    }
-    if (label === "pets") {
-      setGuests({
-        adults: guests.adults,
-        children: guests.children,
-        infants: guests.infants,
-        pets: Math.max(0, guests.pets + delta),
-      });
-    }
-  };
-
-  const submitTripQuery = async () => {
-    setShowGuestMenu(false);
-    setLoading(true);
-    // Get logged in user
-    const {
-      data: { user },
-    } = await supabase.auth.getUser();
-
-    // Check if user is logged in before inserting trip query
-    if (!user) {
-      alert("User is not logged in!");
-      setLoading(false);
-      return;
-    }
-
-    // Get itinerary
-
-    try {
-      const response = await fetch("http://localhost:8000/generate-itinerary", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          user_id: user.id,
-          destination: destination,
-          start_date: checkInDate,
-          end_date: checkOutDate,
-          num_guests: `${guests.adults} adults, ${guests.children} children, ${guests.infants} infants, ${guests.pets} pets`,
-        }),
-      });
-
-      const result = await response.json();
-      console.log("ITINERARY:", result);
-
-      setItinerary(result.itinerary);
-      const loadedDates = result.itinerary.map((d: any) => d.date);
-      setTabs([...loadedDates, "Food"]);
-      setSelectedTab(loadedDates[0]);
-      setShowResults(true);
-      setLoading(false);
-    } catch (error) {
-      console.error(error);
-      alert("Itinerary could not be generated!");
-    }
-
-    // Get food options
-    try {
-      const response = await fetch("http://localhost:8000/generate-food", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          user_id: user.id,
-          destination: destination,
-          start_date: checkInDate,
-          end_date: checkOutDate,
-          num_guests: `${guests.adults} adults, ${guests.children} children, ${guests.infants} infants, ${guests.pets} pets`,
-        }),
-      });
-
-      const result = await response.json();
-      console.log("FOOD:", result);
-
-      setFoodOptions(result.food_recommendations);
-    } catch (error) {
-      console.error(error);
-      alert("Error generating food recommendations");
-    }
   };
 
   // Icons
@@ -306,7 +255,7 @@ export default function CreateItinerary() {
     }
 
     const approvalResults =
-      itinerary?.flatMap((day: ItineraryDay, dayIndex: number) =>
+      itinerary?.flatMap((day: ItineraryDay, _: number) =>
         day.items.map((item: ItineraryItem, itemIndex: number) => ({
           day: day.date,
           index: itemIndex,
@@ -348,66 +297,43 @@ export default function CreateItinerary() {
   };
 
   const saveFinalItinerary = async () => {
-    const {
-      data: { user },
-    } = await supabase.auth.getUser();
-
-    if (!user) {
-      alert("Not logged in!");
-      return;
-    }
-
     if (!itinerary) {
       alert("No itinerary to save");
       return;
     }
 
-    // 1️⃣ Create main itinerary row
-    const { data: itineraryRow, error: itineraryErr } = await supabase
-      .from("itineraries")
-      .insert({
-        user_id: user.id,
-        title: `${destination} Trip`,
-        destination,
-        start_date: checkInDate,
-        end_date: checkOutDate,
-        num_guests: `${guests.adults} adults, ${guests.children} children, ${guests.infants} infants, ${guests.pets} pets`,
-      })
-      .select()
-      .single();
-
-    if (itineraryErr) {
-      console.error(itineraryErr);
-      alert("Error saving itinerary");
-      return;
-    }
-
-    const itineraryId = itineraryRow.id;
-
-    // 2️⃣ Insert all days
-    const dayRowsPayload = itinerary.map((day, index) => ({
-      itinerary_id: itineraryId,
-      day_number: index + 1,
-      date: day.date,
-      notes: "",
-    }));
-
-    const { data: dayRows, error: dayErr } = await supabase
+    // 1️⃣ Fetch existing days for this itinerary
+    const { data: existingDays, error: fetchDaysErr } = await supabase
       .from("itinerary_days")
-      .insert(dayRowsPayload)
-      .select();
+      .select("id, date")
+      .eq("itinerary_id", itinerary_id);
 
-    if (dayErr) {
-      console.error(dayErr);
-      alert("Error saving itinerary days");
+    if (fetchDaysErr) {
+      console.error(fetchDaysErr);
+      alert("Error fetching existing days");
       return;
     }
 
     // Build map: date → day_id
-    const dayIdMap = new Map();
-    dayRows.forEach((d) => dayIdMap.set(d.date, d.id));
+    const dayIdMap = new Map<string, string>();
+    existingDays?.forEach((d) => dayIdMap.set(d.date, d.id));
 
-    // 3️⃣ Insert activities for each day
+    // 2️⃣ Delete existing activities for all days
+    const dayIds = existingDays?.map((d) => d.id) ?? [];
+    if (dayIds.length > 0) {
+      const { error: deleteErr } = await supabase
+        .from("activities")
+        .delete()
+        .in("day_id", dayIds);
+
+      if (deleteErr) {
+        console.error(deleteErr);
+        alert("Error clearing old activities");
+        return;
+      }
+    }
+
+    // 3️⃣ Insert updated activities for each day
     const allActivities = itinerary.flatMap((day) =>
       day.items.map((item, index) => ({
         day_id: dayIdMap.get(day.date),
@@ -417,13 +343,13 @@ export default function CreateItinerary() {
         location_address: item.address,
         description: item.explanation,
         cost: null,
-        start_time: null, // optional, unless you track real start times
+        start_time: null,
         end_time: null,
         latitude: null,
         longitude: null,
         booking_url: item.url,
         place_id: null,
-        is_fixed: selections[index] !== "no", // approved OR not explicitly rejected
+        is_fixed: selections[index] !== "no",
       }))
     );
 
@@ -441,198 +367,12 @@ export default function CreateItinerary() {
 
     setTimeout(() => {
       setShowSavedModal(false);
-      navigate(`/bookings/${itineraryId}`);
-    }, 2000); // modal visible for 2s
+      navigate(`/bookings/${itinerary_id}`);
+    }, 2000);
   };
 
   return (
     <div className="flex flex-col h-[calc(100vh-101px)] bg-gradient-to-r from-[#81b4fa] to-[#4b8ce8]">
-      <div className="flex justify-center mt-10">
-        <div className="relative w-full mx-10">
-          <div className="flex items-center bg-white shadow-md rounded-full px-6 py-3 border border-gray-200 hover:shadow-lg transition-shadow">
-            <div
-              className="flex flex-col flex-1 px-4 border-r border-gray-300
-             rounded-xl transition-all duration-200 
-             hover:bg-gray-100 hover:shadow-sm hover:scale-[1.02] cursor-pointer"
-            >
-              <label className="text-sm font-semibold text-gray-800">
-                Where
-              </label>
-              <input
-                type="text"
-                value={destination}
-                placeholder="Search Destination"
-                className="text-gray-600 placeholder-gray-400 text-sm focus:outline-none bg-transparent"
-                onChange={handleLocationAutocomplete}
-              />
-            </div>
-
-            <div
-              className="flex flex-col flex-1 px-4 border-r border-gray-300
-             rounded-xl transition-all duration-200
-             hover:bg-gray-100 hover:shadow-sm hover:scale-[1.02] cursor-pointer"
-            >
-              <label className="text-sm font-semibold text-gray-800">
-                Trip Start Date
-              </label>
-              <DatePicker
-                selected={checkInDate}
-                onChange={(date) => setCheckInDate(date)}
-                placeholderText="Add dates"
-                dateFormat="MM/dd/yyyy"
-                className="text-gray-600 placeholder-gray-400 text-sm focus:outline-none bg-transparent"
-              />
-            </div>
-
-            <div
-              className="flex flex-col flex-1 px-4 border-r border-gray-300
-             rounded-xl transition-all duration-200
-             hover:bg-gray-100 hover:shadow-sm hover:scale-[1.02] cursor-pointer"
-            >
-              <label className="text-sm font-semibold text-gray-800">
-                Trip End Date
-              </label>
-              <DatePicker
-                selected={checkOutDate}
-                onChange={(date) => setCheckOutDate(date)}
-                placeholderText="Add dates"
-                dateFormat="MM/dd/yyyy"
-                className="text-gray-600 placeholder-gray-400 text-sm focus:outline-none bg-transparent"
-              />
-            </div>
-
-            <div
-              className="flex flex-col flex-1 px-4 
-             rounded-xl transition-all duration-200
-             hover:bg-gray-100 hover:shadow-sm hover:scale-[1.02] cursor-pointer"
-            >
-              <label className="text-sm font-semibold text-gray-800">
-                Who (Number of guests)
-              </label>
-
-              <div
-                className="text-sm text-gray-400"
-                onClick={() => setShowGuestMenu(!showGuestMenu)}
-              >
-                {guests.adults +
-                  guests.children +
-                  guests.infants +
-                  guests.pets >
-                0
-                  ? `${guests.adults} adults, ${guests.children} children, ${guests.infants} infants, ${guests.pets} pets`
-                  : "Add guests"}
-              </div>
-            </div>
-
-            <button
-              className="ml-4 bg-[#81b4fa] text-white rounded-full p-3 hover:bg-blue-400 transition"
-              onClick={() => submitTripQuery()}
-            >
-              <Search className="h-5 w-5" />
-            </button>
-          </div>
-
-          {locationAutocomplete.length > 0 && (
-            <ul className="absolute top-[100%] left-0 right-0 bg-white border border-gray-200 rounded-b-2xl shadow-lg mt-1 z-20 overflow-hidden">
-              {locationAutocomplete.map((city, index) => (
-                <li
-                  key={index}
-                  onClick={() => {
-                    setDestination(city);
-                    setLocationAutocomplete([]);
-                  }}
-                  className="px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 cursor-pointer"
-                >
-                  {city}
-                </li>
-              ))}
-            </ul>
-          )}
-          {showGuestMenu && (
-            <div className="absolute mt-3 right-10 bg-white shadow-xl rounded-3xl w-80 p-5 z-30 ">
-              <div className="flex justify-between mx-5">
-                <h1 className="mt-1">Adults</h1>
-                <div className="flex gap-6">
-                  <button
-                    className="rounded-full border border-gray-400 text-gray-400 py-1 px-3 hover:border-black hover:text-black"
-                    onClick={() => updateGuests("adults", -1)}
-                    disabled={guests.adults === 0}
-                  >
-                    -
-                  </button>
-                  <h1 className="mt-1">{guests.adults}</h1>
-                  <button
-                    className="rounded-full border border-gray-400 text-gray-400 py-1 px-3 hover:border-black hover:text-black"
-                    onClick={() => updateGuests("adults", 1)}
-                  >
-                    +
-                  </button>
-                </div>
-              </div>
-              <hr className="ml-5 w-[85%] mt-3 mb-3 border border-gray-200"></hr>
-              <div className="flex justify-between mx-5">
-                <h1 className="mt-1">Children</h1>
-                <div className="flex gap-6">
-                  <button
-                    className="rounded-full border border-gray-400 text-gray-400 py-1 px-3 hover:border-black hover:text-black"
-                    onClick={() => updateGuests("children", -1)}
-                    disabled={guests.children === 0}
-                  >
-                    -
-                  </button>
-                  <h1 className="mt-1">{guests.children}</h1>
-                  <button
-                    className="rounded-full border border-gray-400 text-gray-400 py-1 px-3 hover:border-black hover:text-black"
-                    onClick={() => updateGuests("children", 1)}
-                  >
-                    +
-                  </button>
-                </div>
-              </div>
-              <hr className="ml-5 w-[85%] mt-3 mb-3 border border-gray-200"></hr>
-              <div className="flex justify-between mx-5">
-                <h1 className="mt-1">Infants</h1>
-                <div className="flex gap-6">
-                  <button
-                    className="rounded-full border border-gray-400 text-gray-400 py-1 px-3 hover:border-black hover:text-black"
-                    onClick={() => updateGuests("infants", -1)}
-                    disabled={guests.infants === 0}
-                  >
-                    -
-                  </button>
-                  <h1 className="mt-1">{guests.infants}</h1>
-                  <button
-                    className="rounded-full border border-gray-400 text-gray-400 py-1 px-3 hover:border-black hover:text-black"
-                    onClick={() => updateGuests("infants", 1)}
-                  >
-                    +
-                  </button>
-                </div>
-              </div>
-              <hr className="ml-5 w-[85%] mt-3 mb-3 border border-gray-200"></hr>
-              <div className="flex justify-between mx-5">
-                <h1 className="mt-1">Pets</h1>
-                <div className="flex gap-6">
-                  <button
-                    className="rounded-full border border-gray-400 text-gray-400 py-1 px-3 hover:border-black hover:text-black"
-                    onClick={() => updateGuests("pets", -1)}
-                    disabled={guests.pets === 0}
-                  >
-                    -
-                  </button>
-                  <h1 className="mt-1">{guests.pets}</h1>
-                  <button
-                    className="rounded-full border border-gray-400 text-gray-400 py-1 px-3 hover:border-black hover:text-black"
-                    onClick={() => updateGuests("pets", 1)}
-                  >
-                    +
-                  </button>
-                </div>
-              </div>
-            </div>
-          )}
-        </div>
-      </div>
       {loading && (
         <div className="flex justify-center mt-16">
           <div className="flex flex-col items-center bg-white shadow-xl rounded-2xl px-12 py-10 animate-fadeIn">
@@ -669,9 +409,9 @@ export default function CreateItinerary() {
         </div>
       )}
 
-      {showResults && (
-        <div className="flex justify-between mx-10 mt-5">
-          <div className="mt-3 bg-white shadow-xl rounded-2xl w-[35%] p-6 h-[65vh] flex flex-col">
+      {showResults && !loading && (
+        <div className="flex justify-between mx-10 mt-5 mb-5 h-[calc(100vh-145px)]">
+          <div className="bg-white shadow-xl rounded-2xl w-[35%] p-6 flex flex-col">
             <h2 className="text-xl font-semibold text-gray-800">
               Plan Your Activities
             </h2>
@@ -710,7 +450,7 @@ export default function CreateItinerary() {
             </div>
           </div>
 
-          <div className="mt-3 bg-white shadow-xl rounded-2xl w-[62%] p-6 h-[65vh] flex flex-col">
+          <div className="bg-white shadow-xl rounded-2xl w-[62%] p-6 flex flex-col">
             <h2 className="text-2xl font-semibold text-gray-800">
               Your Itinerary
             </h2>

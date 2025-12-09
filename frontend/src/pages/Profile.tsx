@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import type { User } from "@supabase/supabase-js";
 import { supabase } from "../supabaseClient";
 import { BsAirplane } from "react-icons/bs";
@@ -330,6 +330,12 @@ const Profile = () => {
                           <p className="mt-1">
                             Guests: {itinerary.num_guests || 1}
                           </p>
+                          <Link
+                            to={`/edit/${itinerary.id}`}
+                            className="text-[#81b4fa] hover:underline text-xs font-medium"
+                          >
+                            Edit Itinerary
+                          </Link>
                         </div>
                       </div>
 
