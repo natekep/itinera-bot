@@ -3,6 +3,15 @@ import { Link, useNavigate } from "react-router-dom";
 import type { User } from "@supabase/supabase-js";
 import { supabase } from "../supabaseClient";
 import { BsAirplane } from "react-icons/bs";
+import {
+  User as UserIcon,
+  MapPin,
+  Compass,
+  Heart,
+  Accessibility,
+  Wallet,
+  Plane,
+} from "lucide-react";
 
 const Profile = () => {
   const navigate = useNavigate();
@@ -143,15 +152,24 @@ const Profile = () => {
   }
 
   return (
-    <div className="min-h-screen bg-background">
+    <div className="min-h-screen bg-gradient-to-br from-[#b4d6ff] via-[#dceeff] to-white">
       <main className="pt-24 pb-12">
         <div className="container mx-auto px-4 max-w-4xl">
           <h1 className="text-4xl font-bold mb-8">My Profile</h1>
 
           <div className="grid gap-6">
             {/* Account Info Card */}
-            <div className="bg-white p-6 rounded-lg border-gray-200 border">
-              <h2 className="text-2xl font-semibold">Account Information</h2>
+            <div
+              className="
+  bg-white/50 backdrop-blur-xl 
+  p-6 rounded-2xl shadow-lg border border-white/30
+"
+            >
+              <h2 className="text-2xl font-semibold flex items-center gap-2">
+                <UserIcon className="h-6 w-6 text-[#4b8ce8]" /> Account
+                Information
+              </h2>
+
               <span className="text-gray-500 text-sm">
                 Your account details
               </span>
@@ -164,8 +182,16 @@ const Profile = () => {
             </div>
 
             {/* Travel Preferences Card */}
-            <div className="bg-white p-6 rounded-lg border-gray-200 border">
-              <h2 className="text-2xl font-semibold">Travel Preferences</h2>
+            <div
+              className="
+  bg-white/50 backdrop-blur-xl 
+  p-6 rounded-2xl shadow-lg border border-white/30
+"
+            >
+              <h2 className="text-2xl font-semibold flex items-center gap-2">
+                <BsAirplane className="text-[#4b8ce8]" /> Travel Preferences
+              </h2>
+
               <span className="text-gray-500 text-sm">
                 Customize your travel experience
               </span>
@@ -194,7 +220,15 @@ const Profile = () => {
                           }));
                           setIsDirty(true);
                         }}
-                        className="w-4 h-4 accent-blue-500"
+                        className="
+  border border-[#c7d9f5] 
+  rounded-lg p-2.5
+  bg-white/40 backdrop-blur-sm
+  transition-all duration-300
+  focus:outline-none focus:ring-2 focus:ring-[#81b4fa]
+  hover:bg-white/60 
+  hover:border-[#81b4fa]
+"
                       />
                       <span>{label}</span>
                     </label>
@@ -246,7 +280,15 @@ const Profile = () => {
               </select>
               <p className="mt-4 text-gray-500 text-sm">Home Location</p>
               <input
-                className="text-black-400 text-lg border border-gray-300 rounded-lg p-2 w-full"
+                className="
+  border border-[#c7d9f5] 
+  rounded-lg p-2.5
+  bg-white/40 backdrop-blur-sm
+  transition-all duration-300
+  focus:outline-none focus:ring-2 focus:ring-[#81b4fa]
+  hover:bg-white/60 
+  hover:border-[#81b4fa]
+"
                 placeholder="Ex: Paris, le-de-France, France or San Francisco, CA, USA"
                 value={homeLocation}
                 onChange={(e) => {
@@ -256,7 +298,15 @@ const Profile = () => {
               />
               <p className="mt-4 text-gray-500 text-sm">Interests</p>
               <input
-                className="text-black-400 text-lg border border-gray-300 rounded-lg p-2 w-full"
+                className="
+  border border-[#c7d9f5] 
+  rounded-lg p-2.5
+  bg-white/40 backdrop-blur-sm
+  transition-all duration-300
+  focus:outline-none focus:ring-2 focus:ring-[#81b4fa]
+  hover:bg-white/60 
+  hover:border-[#81b4fa]
+"
                 placeholder="e.g. Museums, Beaches, Food Tours"
                 value={interests}
                 onChange={(e) => {
@@ -271,11 +321,15 @@ const Profile = () => {
                 <button
                   onClick={handleSave}
                   disabled={isSaving}
-                  className={`mt-4 px-4 py-2 rounded-lg border-2 transition-colors duration-300 ${
-                    isSaving
-                      ? "bg-gray-300 border-gray-300 text-white cursor-not-allowed"
-                      : "bg-[#81b4fa] border-[#81b4fa] text-white hover:bg-white hover:text-[#81b4fa]"
-                  }`}
+                  className={`
+    mt-4 px-6 py-3 rounded-xl font-semibold
+    bg-gradient-to-r from-[#6fb3ff] to-[#4b8ce8]
+    text-white shadow-md transition-all
+    hover:shadow-xl hover:scale-[1.02]
+    hover:from-[#81c2ff] hover:to-[#5d9bf0]
+    active:scale-[0.97]
+    ${isSaving ? "opacity-50 cursor-not-allowed" : ""}
+  `}
                 >
                   {isSaving ? "Saving..." : "Save Preferences"}
                 </button>
@@ -283,8 +337,16 @@ const Profile = () => {
             </div>
 
             {/* Itinerary History Card */}
-            <div className="bg-white p-6 rounded-lg border-gray-200 border">
-              <h2 className="text-2xl font-semibold">Saved Itineraries</h2>
+            <div
+              className="
+  bg-white/50 backdrop-blur-xl 
+  p-6 rounded-2xl shadow-lg border border-white/30
+"
+            >
+              <h2 className="text-2xl font-semibold flex items-center gap-2">
+                <MapPin className="h-6 w-6 text-[#4b8ce8]" /> Saved Itineraries
+              </h2>
+
               <span className="text-gray-500 text-sm">Your travel plans</span>
               {itineraries.length === 0 && (
                 <div className="flex items-center flex-col mt-6">

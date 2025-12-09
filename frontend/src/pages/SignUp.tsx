@@ -11,6 +11,11 @@ export default function SignUp() {
   const [confirmPassword, setConfirmPassword] = useState("");
   const [errorMessage, setErrorMessage] = useState("");
 
+  // alert modal states
+  const [modalOpen, setModalOpen] = useState(false);
+  const [modalMessage, setModalMessage] = useState("");
+  const [modalType, setModalType] = useState<"success" | "error">("success");
+
   const passwordsMatch =
     password.length > 0 &&
     confirmPassword.length > 0 &&
@@ -49,14 +54,20 @@ export default function SignUp() {
 
     // Check if email confirmation is required
     if (data.user && !data.session) {
-      alert(
+      setModalType("success");
+      setModalMessage(
         "Registration successful! Please check your email to confirm your account."
       );
+      setModalOpen(true);
+      return;
+
       // You might want to navigate to a "Check your email" page or clear the form
       navigate("/login");
     } else {
       // If auto-confirm is on (or for testing), log them in immediately
-      alert("Sign up is successful!");
+      setModalType("success");
+      setModalMessage("Sign up is successful!");
+      setModalOpen(true);
       navigate("/onboarding");
     }
   }
@@ -237,6 +248,28 @@ export default function SignUp() {
           </button>
         </form>
       </div>
+      {modalOpen && (
+        <div className="fixed inset-0 bg-black/40 backdrop-blur-sm flex items-center justify-center z-50">
+          <div className="bg-white rounded-xl shadow-xl p-6 w-[90%] max-w-sm animate-fadeIn">
+            <div className="text-center text-4xl mb-3">
+              {modalType === "success" ? "🎉" : "⚠️"}
+            </div>
+            <p className="text-center text-gray-700 mb-6">{modalMessage}</p>
+
+            <button
+              onClick={() => {
+                setModalOpen(false);
+                if (modalType === "success") {
+                  navigate("/login");
+                }
+              }}
+              className="w-full py-2 rounded-lg bg-blue-500 text-white hover:bg-blue-600 transition"
+            >
+              Continue
+            </button>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

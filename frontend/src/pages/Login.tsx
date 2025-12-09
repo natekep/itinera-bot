@@ -9,29 +9,42 @@ export default function Login() {
   const [password, setPassword] = useState("");
   const navigate = useNavigate();
 
+  // alert model states
+  const [modalOpen, setModalOpen] = useState(false);
+  const [modalType, setModalType] = useState<"success" | "error">("success");
+  const [modalMessage, setModalMessage] = useState("");
+
   const isFormValid = email.trim().length > 0 && password.trim().length > 0;
 
   async function handleLogin(e: FormEvent<HTMLFormElement>) {
-    e.preventDefault(); // prevents page reload when form is submitted
+    e.preventDefault();
 
     const { error } = await supabase.auth.signInWithPassword({
-      email: email,
-      password: password,
+      email,
+      password,
     });
 
     if (error) {
-      // Specific check for unconfirmed email
+      setModalType("error");
+
       if (error.message.includes("Email not confirmed")) {
-        alert(
+        setModalMessage(
           "Please verify your email address. Check your inbox for the confirmation link."
         );
       } else {
-        alert(error.message);
+        setModalMessage(error.message);
       }
-    } else {
-      alert("Log in is successful!");
-      navigate("/");
+
+      setModalOpen(true);
+      return;
     }
+
+    // Success modal
+    setModalType("success");
+    setModalMessage("Login successful! Redirecting...");
+    setModalOpen(true);
+
+    setTimeout(() => navigate("/"), 1100);
   }
 
   return (
@@ -117,6 +130,30 @@ export default function Login() {
           </button>
         </form>
       </div>
+      {modalOpen && (
+        <div className="fixed inset-0 bg-black/40 backdrop-blur-sm flex items-center justify-center z-50">
+          <div className="bg-white rounded-xl shadow-xl p-6 w-[90%] max-w-sm animate-fadeIn">
+            <div className="text-center text-4xl mb-3">
+              {modalType === "success" ? "🎉" : "⚠️"}
+            </div>
+            <p className="text-center text-gray-700 mb-6">{modalMessage}</p>
+            <button
+              onClick={() => {
+                setModalOpen(false);
+                if (modalType === "success") navigate("/");
+              }}
+              className="
+          w-full py-2 rounded-lg bg-gradient-to-r 
+          from-[#6fb3ff] to-[#4b8ce8] text-white
+          hover:from-[#81c2ff] hover:to-[#5d9bf0]
+          shadow-md hover:shadow-xl transition
+        "
+            >
+              Continue
+            </button>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

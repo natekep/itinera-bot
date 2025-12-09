@@ -446,10 +446,24 @@ export default function CreateItinerary() {
   };
 
   return (
-    <div className="flex flex-col h-[calc(100vh-101px)] bg-gradient-to-r from-[#81b4fa] to-[#4b8ce8]">
+    <div
+      className="flex flex-col h-[calc(100vh-101px)] 
+  bg-gradient-to-br from-[#b4d6ff] via-[#dceeff] to-white"
+    >
       <div className="flex justify-center mt-10">
         <div className="relative w-full mx-10">
-          <div className="flex items-center bg-white shadow-md rounded-full px-6 py-3 border border-gray-200 hover:shadow-lg transition-shadow">
+          <div
+            className="
+    flex items-center 
+    rounded-full px-6 py-4 
+    bg-white/40 backdrop-blur-md 
+    border border-[#c7d9f5]
+    shadow-md 
+    hover:bg-white/60 
+    hover:shadow-xl 
+    transition-all
+  "
+          >
             <div
               className="flex flex-col flex-1 px-4 border-r border-gray-300
              rounded-xl transition-all duration-200 
@@ -549,7 +563,15 @@ export default function CreateItinerary() {
             </ul>
           )}
           {showGuestMenu && (
-            <div className="absolute mt-3 right-10 bg-white shadow-xl rounded-3xl w-80 p-5 z-30 ">
+            <div
+              className="
+    absolute mt-3 right-10 
+    bg-white/60 backdrop-blur-xl 
+    shadow-xl rounded-3xl 
+    w-80 p-5 z-30 
+    border border-[#c7d9f5]
+  "
+            >
               <div className="flex justify-between mx-5">
                 <h1 className="mt-1">Adults</h1>
                 <div className="flex gap-6">
@@ -635,7 +657,16 @@ export default function CreateItinerary() {
       </div>
       {loading && (
         <div className="flex justify-center mt-16">
-          <div className="flex flex-col items-center bg-white shadow-xl rounded-2xl px-12 py-10 animate-fadeIn">
+          <div
+            className="
+    flex flex-col items-center 
+    bg-white/70 backdrop-blur-md 
+    shadow-xl rounded-2xl 
+    px-12 py-10 
+    border border-[#c7d9f5]
+    animate-fadeIn
+  "
+          >
             {/* Airplane Animation */}
             <div className="relative w-40 h-20 overflow-visible">
               <div className="absolute animate-planeFlight text-4xl">✈️</div>

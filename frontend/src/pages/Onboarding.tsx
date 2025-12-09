@@ -37,6 +37,33 @@ const INTEREST_SUGGESTIONS = [
   "Wine Tasting",
 ];
 
+const FOOD_PREFERENCE_SUGGESTIONS = [
+  "Indian",
+  "Chinese",
+  "Mexican",
+  "Italian",
+  "Sushi",
+  "BBQ",
+  "Seafood",
+  "Burgers",
+  "Ice Cream",
+  "Coffee Shops",
+  "Bakeries",
+  "Street Food",
+];
+
+const DIETARY_RESTRICTION_SUGGESTIONS = [
+  "Vegetarian",
+  "Vegan",
+  "Gluten-Free",
+  "Halal",
+  "Kosher",
+  "Dairy-Free",
+  "Nut-Free",
+  "Low-Sodium",
+  "Pescatarian",
+];
+
 export default function UserOnboarding() {
   const navigate = useNavigate();
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -47,7 +74,20 @@ export default function UserOnboarding() {
   const [preferredTravelMode, setPreferredTravelMode] = useState("");
   const [selectedInterests, setSelectedInterests] = useState<string[]>([]);
   const [customInterest, setCustomInterest] = useState("");
-  const [dietaryRestrictions, setDietaryRestrictions] = useState("");
+
+  // Alert modal states
+  const [modalOpen, setModalOpen] = useState(false);
+  const [modalType, setModalType] = useState<"success" | "error">("success");
+  const [modalMessage, setModalMessage] = useState("");
+
+  // Food Preferences
+  const [foodPreferences, setFoodPreferences] = useState<string[]>([]);
+  const [customFoodPreference, setCustomFoodPreference] = useState("");
+
+  // Restrictions
+  const [dietaryRestrictions, setDietaryRestrictions] = useState<string[]>([]);
+  const [customDietRestriction, setCustomDietRestriction] = useState("");
+
   const [accessibility, setAccessibility] = useState({
     wheelchair_access: false,
     step_free: false,
@@ -115,6 +155,48 @@ export default function UserOnboarding() {
     setSelectedInterests((prev) => prev.filter((i) => i !== interest));
   };
 
+  // FOOD PREFERENCES
+  const toggleFoodPreference = (item: string) => {
+    setFoodPreferences((prev) =>
+      prev.includes(item) ? prev.filter((i) => i !== item) : [...prev, item]
+    );
+  };
+
+  const addCustomFoodPreference = () => {
+    if (
+      customFoodPreference.trim() &&
+      !foodPreferences.includes(customFoodPreference.trim())
+    ) {
+      setFoodPreferences((prev) => [...prev, customFoodPreference.trim()]);
+      setCustomFoodPreference("");
+    }
+  };
+
+  const removeFoodPreference = (item: string) => {
+    setFoodPreferences((prev) => prev.filter((i) => i !== item));
+  };
+
+  // DIETARY RESTRICTIONS
+  const toggleDietRestriction = (item: string) => {
+    setDietaryRestrictions((prev) =>
+      prev.includes(item) ? prev.filter((i) => i !== item) : [...prev, item]
+    );
+  };
+
+  const addCustomDietRestriction = () => {
+    if (
+      customDietRestriction.trim() &&
+      !dietaryRestrictions.includes(customDietRestriction.trim())
+    ) {
+      setDietaryRestrictions((prev) => [...prev, customDietRestriction.trim()]);
+      setCustomDietRestriction("");
+    }
+  };
+
+  const removeDietRestriction = (item: string) => {
+    setDietaryRestrictions((prev) => prev.filter((i) => i !== item));
+  };
+
   async function handleSubmit(e: FormEvent<HTMLFormElement>) {
     e.preventDefault();
     setIsSubmitting(true);
@@ -124,7 +206,9 @@ export default function UserOnboarding() {
     } = await supabase.auth.getUser();
 
     if (!user) {
-      alert("Please log in first.");
+      setModalType("error");
+      setModalMessage("User not logged in, please log in!");
+      setModalOpen(true);
       navigate("/login");
       setIsSubmitting(false);
       return;
@@ -136,16 +220,16 @@ export default function UserOnboarding() {
       .map((key) => key.replace("_", " "))
       .join(", ");
 
-    // Convert interests array to comma-separated string
-    const interestsString = selectedInterests.join(", ");
-
     const { error } = await supabase.from("user_onboarding").insert([
       {
         user_id: user.id,
+
         preferred_pace: preferredPace,
         preferred_travel_mode: preferredTravelMode,
-        interests: interestsString,
-        dietary_restrictions: dietaryRestrictions,
+        interests: selectedInterests.join(", "),
+        food_preferences: foodPreferences.join(", "),
+        dietary_restrictions: dietaryRestrictions.join(", "),
+
         accessibility: selectedAccessibility,
         budget_range: budgetRange,
         age_range: ageRange,
@@ -156,10 +240,13 @@ export default function UserOnboarding() {
 
     if (error) {
       console.error("Error inserting data:", error.message);
-      alert("Something went wrong — please try again!");
+      setModalType("error");
+      setModalMessage("Something went wrong — please try again!");
+      setModalOpen(true);
     } else {
-      alert("Onboarding info saved successfully!");
-      navigate("/create");
+      setModalType("success");
+      setModalMessage("Your preferences have been saved! You're all set 🎉");
+      setModalOpen(true);
     }
 
     setIsSubmitting(false);
@@ -378,25 +465,172 @@ export default function UserOnboarding() {
           </div>
 
           {/* Dietary Section */}
+          {/* FOOD PREFERENCE SECTION */}
           <div className="overflow-hidden rounded-xl bg-white p-6 shadow-lg">
             <div className="mb-4 flex items-center gap-2">
               <Utensils className="h-5 w-5 text-[#4b8ce8]" />
-              <h2 className="text-xl font-semibold">Dietary Preferences</h2>
+              <h2 className="text-xl font-semibold">Food Preferences</h2>
             </div>
             <p className="mb-6 text-sm text-gray-600">
-              Help us recommend the best dining spots
+              What kinds of foods or cuisines do you enjoy? (Click to add)
             </p>
 
-            <input
-              type="text"
-              placeholder="e.g., Vegetarian, Gluten-Free, Halal"
-              value={dietaryRestrictions}
-              onChange={(e) => setDietaryRestrictions(e.target.value)}
-              className="w-full rounded-lg border border-gray-300 p-2.5 focus:border-[#4b8ce8] focus:outline-none focus:ring-2 focus:ring-[#81b4fa]/50"
-            />
-            <p className="mt-2 text-sm text-gray-500">
-              Separate multiple restrictions with commas. Leave blank if none.
+            {/* Selected food preferences */}
+            {foodPreferences.length > 0 && (
+              <div className="mb-4">
+                <p className="mb-2 text-sm font-medium text-gray-700">
+                  Selected food preferences:
+                </p>
+                <div className="flex flex-wrap gap-2">
+                  {foodPreferences.map((item) => (
+                    <span
+                      key={item}
+                      className="inline-flex items-center gap-1 rounded-full bg-[#81b4fa]/20 px-3 py-1 text-sm font-medium text-[#4b8ce8]"
+                    >
+                      {item}
+                      <button
+                        type="button"
+                        onClick={() => removeFoodPreference(item)}
+                        className="ml-1 hover:text-red-500"
+                      >
+                        <X className="h-3 w-3" />
+                      </button>
+                    </span>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            {/* Suggested food preferences */}
+            <div className="mb-4">
+              <p className="mb-2 text-sm font-medium text-gray-700">
+                Popular foods (click to add):
+              </p>
+              <div className="flex flex-wrap gap-2">
+                {FOOD_PREFERENCE_SUGGESTIONS.map((item) => (
+                  <button
+                    key={item}
+                    type="button"
+                    onClick={() => toggleFoodPreference(item)}
+                    className={`rounded-full px-4 py-2 text-sm font-medium transition-all ${
+                      foodPreferences.includes(item)
+                        ? "bg-[#4b8ce8] text-white"
+                        : "bg-gray-100 text-gray-700 hover:bg-gray-200"
+                    }`}
+                  >
+                    {item}
+                  </button>
+                ))}
+              </div>
+            </div>
+
+            {/* Custom food preference */}
+            <div className="flex gap-2">
+              <input
+                type="text"
+                placeholder="Add your own preference..."
+                value={customFoodPreference}
+                onChange={(e) => setCustomFoodPreference(e.target.value)}
+                onKeyDown={(e) => {
+                  if (e.key === "Enter") {
+                    e.preventDefault();
+                    addCustomFoodPreference();
+                  }
+                }}
+                className="flex-1 rounded-lg border border-gray-300 p-2.5 focus:border-[#4b8ce8] focus:outline-none focus:ring-2 focus:ring-[#81b4fa]/50"
+              />
+              <button
+                type="button"
+                onClick={addCustomFoodPreference}
+                className="rounded-lg bg-[#4b8ce8] px-4 py-2 text-white hover:bg-[#3a7dd8] transition-colors"
+              >
+                <Plus className="h-5 w-5" />
+              </button>
+            </div>
+          </div>
+
+          {/* DIETARY RESTRICTIONS SECTION */}
+          <div className="overflow-hidden rounded-xl bg-white p-6 shadow-lg">
+            <div className="mb-4 flex items-center gap-2">
+              <Accessibility className="h-5 w-5 text-[#4b8ce8]" />
+              <h2 className="text-xl font-semibold">Dietary Restrictions</h2>
+            </div>
+            <p className="mb-6 text-sm text-gray-600">
+              Choose any restrictions we should be aware of
             </p>
+
+            {/* Selected restrictions */}
+            {dietaryRestrictions.length > 0 && (
+              <div className="mb-4">
+                <p className="mb-2 text-sm font-medium text-gray-700">
+                  Selected restrictions:
+                </p>
+                <div className="flex flex-wrap gap-2">
+                  {dietaryRestrictions.map((item) => (
+                    <span
+                      key={item}
+                      className="inline-flex items-center gap-1 rounded-full bg-[#81b4fa]/20 px-3 py-1 text-sm font-medium text-[#4b8ce8]"
+                    >
+                      {item}
+                      <button
+                        type="button"
+                        onClick={() => removeDietRestriction(item)}
+                        className="ml-1 hover:text-red-500"
+                      >
+                        <X className="h-3 w-3" />
+                      </button>
+                    </span>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            {/* Restriction suggestions */}
+            <div className="mb-4">
+              <p className="mb-2 text-sm font-medium text-gray-700">
+                Common restrictions:
+              </p>
+              <div className="flex flex-wrap gap-2">
+                {DIETARY_RESTRICTION_SUGGESTIONS.map((item) => (
+                  <button
+                    key={item}
+                    type="button"
+                    onClick={() => toggleDietRestriction(item)}
+                    className={`rounded-full px-4 py-2 text-sm font-medium transition-all ${
+                      dietaryRestrictions.includes(item)
+                        ? "bg-[#4b8ce8] text-white"
+                        : "bg-gray-100 text-gray-700 hover:bg-gray-200"
+                    }`}
+                  >
+                    {item}
+                  </button>
+                ))}
+              </div>
+            </div>
+
+            {/* Custom restriction */}
+            <div className="flex gap-2">
+              <input
+                type="text"
+                placeholder="Add your own restriction..."
+                value={customDietRestriction}
+                onChange={(e) => setCustomDietRestriction(e.target.value)}
+                onKeyDown={(e) => {
+                  if (e.key === "Enter") {
+                    e.preventDefault();
+                    addCustomDietRestriction();
+                  }
+                }}
+                className="flex-1 rounded-lg border border-gray-300 p-2.5 focus:border-[#4b8ce8] focus:outline-none focus:ring-2 focus:ring-[#81b4fa]/50"
+              />
+              <button
+                type="button"
+                onClick={addCustomDietRestriction}
+                className="rounded-lg bg-[#4b8ce8] px-4 py-2 text-white hover:bg-[#3a7dd8] transition-colors"
+              >
+                <Plus className="h-5 w-5" />
+              </button>
+            </div>
           </div>
 
           {/* Accessibility Section */}
@@ -490,6 +724,25 @@ export default function UserOnboarding() {
           </div>
         </form>
       </div>
+      {modalOpen && (
+        <div className="fixed inset-0 bg-black/40 backdrop-blur-sm flex items-center justify-center z-50">
+          <div className="bg-white rounded-xl shadow-xl p-6 w-[90%] max-w-sm animate-fadeIn">
+            <div className="text-center text-4xl mb-3">
+              {modalType === "success" ? "🎉" : "⚠️"}
+            </div>
+            <p className="text-center text-gray-700 mb-6">{modalMessage}</p>
+            <button
+              onClick={() => {
+                setModalOpen(false);
+                if (modalType === "success") navigate("/create");
+              }}
+              className="w-full py-2 rounded-lg bg-[#4b8ce8] text-white hover:bg-[#3a7dd8] transition"
+            >
+              Continue
+            </button>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
