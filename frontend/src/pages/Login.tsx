@@ -9,6 +9,8 @@ export default function Login() {
   const [password, setPassword] = useState("");
   const navigate = useNavigate();
 
+  const isFormValid = email.trim().length > 0 && password.trim().length > 0;
+
   async function handleLogin(e: FormEvent<HTMLFormElement>) {
     e.preventDefault(); // prevents page reload when form is submitted
 
@@ -20,7 +22,9 @@ export default function Login() {
     if (error) {
       // Specific check for unconfirmed email
       if (error.message.includes("Email not confirmed")) {
-        alert("Please verify your email address. Check your inbox for the confirmation link.");
+        alert(
+          "Please verify your email address. Check your inbox for the confirmation link."
+        );
       } else {
         alert(error.message);
       }
@@ -31,9 +35,10 @@ export default function Login() {
   }
 
   return (
-    <div className="flex flex-col items-center min-h-screen pt-10">
+    <div className="bg-gradient-to-br from-[#b4d6ff] via-[#dceeff] to-white flex flex-col items-center min-h-screen pt-20">
       <img className="w-25" src={ItineraLogo} alt="Itinera Logo"></img>
       <div className="bg-white border border-gray-300 rounded-xl shadow-lg p-8 w-[100%] max-w-md">
+        <div className="text-4xl text-center mb-2 animate-bounce">🌍</div>
         <h1 className="text-3xl text-center font-semibold">Welcome Back</h1>
         <p className="text-gray-500 mt-2 text-center">
           Sign in to continue planning your future adventures!
@@ -45,30 +50,68 @@ export default function Login() {
           <input
             type="email"
             placeholder="Email"
-            className="border border-gray-300 rounded-lg p-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
+            className="
+  border border-[#c7d9f5] 
+  rounded-lg p-2
+  bg-white/40 backdrop-blur-sm
+  transition-all duration-300
+  focus:outline-none focus:ring-2 focus:ring-[#81b4fa]
+  hover:bg-white/60 
+  hover:border-[#81b4fa]
+"
             value={email}
             onChange={(e) => setEmail(e.target.value)}
           />
           <input
             type="password"
             placeholder="Password"
-            className="border border-gray-300 rounded-lg p-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
+            className="
+  border border-[#c7d9f5] 
+  rounded-lg p-2
+  bg-white/40 backdrop-blur-sm
+  transition-all duration-300
+  focus:outline-none focus:ring-2 focus:ring-[#81b4fa]
+  hover:bg-white/60 
+  hover:border-[#81b4fa]
+"
             value={password}
             onChange={(e) => setPassword(e.target.value)}
           />
           <button
             type="submit"
-            className="bg-[#81b4fa] text-white p-2 rounded-lg border-2 border-[#81b4fa] hover:bg-white hover:text-[#81b4fa] transition-colors duration-300"
+            disabled={!isFormValid}
+            className={`
+    w-full py-3 rounded-lg font-semibold
+    transition-all duration-300
+    border border-transparent
+    bg-gradient-to-r from-[#6fb3ff] to-[#4b8ce8]
+    text-white shadow-md
+    hover:shadow-xl hover:scale-[1.02]
+    hover:from-[#81c2ff] hover:to-[#5d9bf0]
+    active:scale-[0.98]
+    disabled:opacity-50 disabled:cursor-not-allowed
+  `}
           >
             Continue
           </button>
+
           <p className="text-gray-500  mx-auto">
             ------------ need to create an account? ------------
           </p>
           <button
             type="button"
             onClick={() => navigate("/signup")}
-            className="bg-white border-2 border-[#81b4fa] text-[#81b4fa] p-2 rounded-lg hover:bg-[#81b4fa] hover:text-white transition-colors duration-200"
+            className={`
+  w-full py-3 rounded-lg font-semibold
+  transition-all duration-300
+  border border-transparent
+  bg-gradient-to-r from-[#6fb3ff] to-[#4b8ce8]
+  text-white shadow-md
+  hover:shadow-xl hover:scale-[1.02]
+  hover:from-[#81c2ff] hover:to-[#5d9bf0]
+  active:scale-[0.98]
+  disabled:opacity-50 disabled:cursor-not-allowed
+`}
           >
             Sign Up
           </button>

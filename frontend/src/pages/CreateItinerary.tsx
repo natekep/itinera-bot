@@ -441,7 +441,7 @@ export default function CreateItinerary() {
 
     setTimeout(() => {
       setShowSavedModal(false);
-      navigate(`/bookings/${itineraryId}`);
+      navigate(`/tripSummary/${itineraryId}`);
     }, 2000); // modal visible for 2s
   };
 
