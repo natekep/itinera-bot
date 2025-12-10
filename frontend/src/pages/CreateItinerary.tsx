@@ -163,7 +163,9 @@ export default function CreateItinerary() {
   const geocodeAddress = async (address: string) => {
     try {
       const res = await fetch(
-        `http://localhost:8000/geocode?address=${encodeURIComponent(address)}`
+        `http://3.136.161.243:8000/geocode?address=${encodeURIComponent(
+          address
+        )}`
       );
       const data = await res.json();
 
@@ -194,17 +196,20 @@ export default function CreateItinerary() {
     // Get itinerary
 
     try {
-      const response = await fetch("http://localhost:8000/generate-itinerary", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          user_id: user.id,
-          destination: destination,
-          start_date: checkInDate,
-          end_date: checkOutDate,
-          num_guests: `${guests.adults} adults, ${guests.children} children, ${guests.infants} infants, ${guests.pets} pets`,
-        }),
-      });
+      const response = await fetch(
+        "http://3.136.161.243:8000/generate-itinerary",
+        {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            user_id: user.id,
+            destination: destination,
+            start_date: checkInDate,
+            end_date: checkOutDate,
+            num_guests: `${guests.adults} adults, ${guests.children} children, ${guests.infants} infants, ${guests.pets} pets`,
+          }),
+        }
+      );
 
       const result = await response.json();
       console.log("ITINERARY:", result);
@@ -222,7 +227,7 @@ export default function CreateItinerary() {
 
     // Get food options
     try {
-      const response = await fetch("http://localhost:8000/generate-food", {
+      const response = await fetch("http://3.136.161.243:8000/generate-food", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
@@ -334,7 +339,7 @@ export default function CreateItinerary() {
 
     try {
       const response = await fetch(
-        "http://localhost:8000/regenerate-itinerary",
+        "http://3.136.161.243:8000/regenerate-itinerary",
         {
           method: "POST",
           headers: { "Content-Type": "application/json" },
