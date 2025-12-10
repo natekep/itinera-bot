@@ -52,6 +52,13 @@ export default function SignUp() {
       },
     });
 
+    if (error) {
+      setModalType("error");
+      setModalMessage(error.message);
+      setModalOpen(true);
+      return;
+    }
+
     // Check if email confirmation is required
     if (data.user && !data.session) {
       setModalType("success");
@@ -63,12 +70,6 @@ export default function SignUp() {
 
       // You might want to navigate to a "Check your email" page or clear the form
       navigate("/login");
-    } else {
-      // If auto-confirm is on (or for testing), log them in immediately
-      setModalType("success");
-      setModalMessage("Sign up is successful!");
-      setModalOpen(true);
-      navigate("/onboarding");
     }
   }
   return (
