@@ -1,0 +1,223 @@
+openapi: 3.1.0
+info:
+  title: Itinera Backend API
+  version: 1.0.0
+  description: >
+    API endpoints for itinerary generation, regeneration, food recommendations,
+    and utility services used by the Itinera application.
+
+servers:
+  - url: http://localhost:8000
+    description: Local development server
+
+tags:
+  - name: Itinerary
+    description: Endpoints for generating and modifying itineraries
+  - name: Food
+    description: Endpoints for generating food recommendations
+  - name: Utilities
+    description: Support endpoints for geocoding and helper functions
+
+paths:
+
+  /generate-itinerary:
+    post:
+      tags: [Itinerary]
+      summary: Generate itinerary
+      description: Generates a new itinerary using ChatGPT + external event APIs.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/GenerateItineraryRequest"
+      responses:
+        '200':
+          description: Successful itinerary generation
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ItineraryResponse"
+        '500':
+          description: Failed to generate itinerary
+
+  /regenerate-itinerary:
+    post:
+      tags: [Itinerary]
+      summary: Regenerate itinerary
+      description: Applies user edits or chatbot feedback and regenerates itinerary.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/RegenerateItineraryRequest"
+      responses:
+        '200':
+          description: Successful regeneration
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ItineraryResponse"
+        '500':
+          description: Regeneration error
+
+  /fetch-itinerary:
+    post:
+      tags: [Itinerary]
+      summary: Fetch itinerary-related data
+      description: Fetches events, POIs, and additional metadata before generation.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/FetchItineraryRequest"
+      responses:
+        '200':
+          description: Successful fetch
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/FetchItineraryResponse"
+        '500':
+          description: Fetch error
+
+  /generate-food:
+    post:
+      tags: [Food]
+      summary: Generate food recommendations
+      description: Generates food and dining recommendations for the trip.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/GenerateFoodRequest"
+      responses:
+        '200':
+          description: Food recommendation generation
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/FoodResponse"
+        '500':
+          description: Failed to generate food recommendations
+
+  /geocode:
+    get:
+      tags: [Utilities]
+      summary: Geocode an address
+      description: Converts an address string into latitude/longitude coordinates.
+      parameters:
+        - name: address
+          in: query
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Geocoding success
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/GeocodeResponse"
+        '400':
+          description: Missing or invalid address
+        '500':
+          description: Geocoding error
+
+components:
+  schemas:
+
+    GenerateItineraryRequest:
+      type: object
+      properties:
+        user_id:
+          type: string
+        trip_details:
+          type: object
+        preferences:
+          type: object
+
+    RegenerateItineraryRequest:
+      type: object
+      properties:
+        itinerary_id:
+          type: string
+        user_feedback:
+          type: string
+        updated_preferences:
+          type: object
+
+    FetchItineraryRequest:
+      type: object
+      properties:
+        user_id:
+          type: string
+        location:
+          type: string
+        trip_dates:
+          type: object
+
+    GenerateFoodRequest:
+      type: object
+      properties:
+        location:
+          type: string
+        preferences:
+          type: object
+
+    ItineraryResponse:
+      type: object
+      properties:
+        itinerary:
+          type: object
+        days:
+          type: array
+          items:
+            type: object
+        activities:
+          type: array
+          items:
+            type: object
+        metadata:
+          type: object
+
+    FetchItineraryResponse:
+      type: object
+      properties:
+        events:
+          type: array
+          items:
+            type: object
+        pois:
+          type: array
+          items:
+            type: object
+        weather:
+          type: object
+
+    FoodResponse:
+      type: object
+      properties:
+        restaurants:
+          type: array
+          items:
+            type: object
+        cafes:
+          type: array
+          items:
+            type: object
+        nightlife:
+          type: array
+          items:
+            type: object
+
+    GeocodeResponse:
+      type: object
+      properties:
+        lat:
+          type: number
+        lng:
+          type: number
