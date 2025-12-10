@@ -232,7 +232,7 @@ def get_user_onboarding_profile(user_id: str):
                 preferred_pace=user["preferred_pace"],
                 interests=user["interests"],
                 diet_preferences=user["dietary_restrictions"],
-                food_preferences=user["food_preferences"],
+                food_preferences=user["food_preferences"] or "",
                 accessibility=user["accessibility"],
                 budget=user["budget_range"],
             )

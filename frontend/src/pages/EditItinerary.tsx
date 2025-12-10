@@ -59,7 +59,7 @@ export default function EditItinerary() {
   const fetchItinerary = async (userId: string) => {
     setLoading(true);
 
-    const response = await fetch("http://localhost:8000/fetch-itinerary", {
+    const response = await fetch("http://3.136.161.243:8000/fetch-itinerary", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
@@ -95,21 +95,33 @@ export default function EditItinerary() {
   };
 
   const fetchFood = async (userId: string, startDate: Date, endDate: Date) => {
-    const foodResponse = await fetch("http://localhost:8000/generate-food", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        user_id: userId,
-        destination: destination,
-        start_date: startDate,
-        end_date: endDate,
-        num_guests: `${guests.adults} adults, ${guests.children} children, ${guests.infants} infants, ${guests.pets} pets`,
-      }),
-    });
+    // Dates are currently unused here because food options are persisted in Supabase
+    if (!itinerary_id) return;
 
-    const foodResult = await foodResponse.json();
-    console.log("FOOD:", foodResult);
-    setFoodOptions(foodResult.food_recommendations);
+    const { data, error } = await supabase
+      .from("food_options")
+      .select(
+        "id, user_id, itinerary_id, name, address, rating, price_level, url, explanation"
+      )
+      .eq("user_id", userId)
+      .eq("itinerary_id", itinerary_id);
+
+    if (error) {
+      console.error("Error fetching food options from Supabase:", error);
+      return;
+    }
+
+    const transformed = (data || []).map((row: any) => ({
+      title: row.name,
+      // type is not stored in food_options; leave undefined so UI falls back gracefully
+      address: row.address,
+      rating: row.rating,
+      priceLevel: row.price_level,
+      explanation: row.explanation,
+      url: row.url,
+    }));
+
+    setFoodOptions(transformed);
   };
 
   useEffect(() => {
@@ -266,7 +278,7 @@ export default function EditItinerary() {
 
     try {
       const response = await fetch(
-        "http://localhost:8000/regenerate-itinerary",
+        "http://3.136.161.243:8000/regenerate-itinerary",
         {
           method: "POST",
           headers: { "Content-Type": "application/json" },
