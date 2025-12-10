@@ -1,6 +1,9 @@
 import React from "react";
-import { TimeDisplay } from "../components/RoutePanel";
-import { type RoutesByMode } from "../pages/Iram";
+
+type RoutesByMode = {
+  [mode: string]: any;
+};
+
 interface Place {
   displayName?: string;
   types?: string[];
@@ -28,25 +31,24 @@ interface PlaceSidebarProps {
 
 const formatDuration = (durationString: string): string => {
   if (!durationString) return "N/A";
-  const totalSec = parseInt(durationString.replace('s', ''), 10);
+  const totalSec = parseInt(durationString.replace("s", ""), 10);
   if (isNaN(totalSec)) return "N/A";
 
   const hrs = Math.floor(totalSec / 3600);
   const min = Math.floor((totalSec % 3600) / 60);
 
-  let result = '';
+  let result = "";
   if (hrs > 0) result += `${hrs} hr`;
   if (min > 0) result += `${min} min`;
 
-  return result.trim() || '0 min';
-}
+  return result.trim() || "0 min";
+};
 
 const PlaceSidebar: React.FC<PlaceSidebarProps> = ({
   origin,
   destinations,
   routes,
   places,
-  destinationTimezones = [],
   routesByMode,
 }) => {
   return (
@@ -67,16 +69,29 @@ const PlaceSidebar: React.FC<PlaceSidebarProps> = ({
             </h4>
             <div className="space-y-2">
               {Object.entries(routesByMode).map(([mode, routeData]) => {
-              if (!routeData || !routeData.legs) return null;
+                if (!routeData || !routeData.legs) return null;
 
-                const totalDistanceMeters = routeData.legs.reduce((sum: number, leg: any) => sum + (leg.distanceMeters || 0), 0);
+                const totalDistanceMeters = routeData.legs.reduce(
+                  (sum: number, leg: any) => sum + (leg.distanceMeters || 0),
+                  0
+                );
                 const totalDuration = routeData.duration;
-              
-                return(
-                  <div key={mode}  className="text-sm text-grey-600 bg-white border border-gray-200 rounded-md px-3 py-2 shadow-sm">
-                    <strong className="capitalize">{mode.toLowerCase()}:</strong>
-                    <span className="ml-2 font-medium">{formatDuration(totalDuration)}</span>
-                    <span className="text-gray-500"> ({ (totalDistanceMeters / 1000).toFixed(1) } km)</span>
+
+                return (
+                  <div
+                    key={mode}
+                    className="text-sm text-grey-600 bg-white border border-gray-200 rounded-md px-3 py-2 shadow-sm"
+                  >
+                    <strong className="capitalize">
+                      {mode.toLowerCase()}:
+                    </strong>
+                    <span className="ml-2 font-medium">
+                      {formatDuration(totalDuration)}
+                    </span>
+                    <span className="text-gray-500">
+                      {" "}
+                      ({(totalDistanceMeters / 1000).toFixed(1)} km)
+                    </span>
                   </div>
                 );
               })}
@@ -115,8 +130,8 @@ const PlaceSidebar: React.FC<PlaceSidebarProps> = ({
                 key={i}
                 className="text-sm text-gray-700 bg-white border border-gray-200 rounded-md px-3 py-2 shadow-sm"
               >
-                <strong>{p.displayName || "Unnamed Place"}</strong>{" "}
-                ({p.rating ?? "N/A"} ★)
+                <strong>{p.displayName || "Unnamed Place"}</strong> (
+                {p.rating ?? "N/A"} ★)
               </li>
             ))}
           </ul>

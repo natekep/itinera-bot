@@ -326,7 +326,7 @@ export default function CreateItinerary() {
     }
 
     const approvalResults =
-      itinerary?.flatMap((day: ItineraryDay, dayIndex: number) =>
+      itinerary?.flatMap((day: ItineraryDay) =>
         day.items.map((item: ItineraryItem, itemIndex: number) => ({
           day: day.date,
           index: itemIndex,

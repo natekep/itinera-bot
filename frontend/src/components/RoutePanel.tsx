@@ -1,6 +1,9 @@
 import React, { useState, useRef, useEffect } from "react";
 import axios from "axios";
-import { type RoutesByMode } from "../pages/Iram";
+
+type RoutesByMode = {
+  [mode: string]: any;
+};
 
 export const TimeDisplay: React.FC<{ tz: string }> = ({ tz }) => {
   const [time, setTime] = useState("");
@@ -60,7 +63,8 @@ const RoutePanel: React.FC<RoutePanelProps> = ({
   const focusOrigin = () => inputRef.current?.focus();
 
   const addDestination = () => {
-    if (!origin.trim()) return alert("Please enter an origin first."), focusOrigin();
+    if (!origin.trim())
+      return alert("Please enter an origin first."), focusOrigin();
     if (newDest.trim()) {
       setDestinations([...destinations, newDest.trim()]);
       setNewDest("");
@@ -81,40 +85,43 @@ const RoutePanel: React.FC<RoutePanelProps> = ({
       const coords = (
         await Promise.all(
           all.map(async (a) => {
-            const res = await fetchData("http://127.0.0.1:8000/geocode", { address: a });
+            const res = await fetchData("http://127.0.0.1:8000/geocode", {
+              address: a,
+            });
             return res.results?.[0]?.geometry?.location || null;
           })
         )
       ).filter(Boolean);
 
       setCoords(coords);
-      const [orig, ...destCoords] = coords;
-      
-      const modesToFetch = ['DRIVE', 'TRANSIT', 'BICYCLE', 'WALK'];
+      const [_, ...destCoords] = coords;
+
+      const modesToFetch = ["DRIVE", "TRANSIT", "BICYCLE", "WALK"];
       const routesData: RoutesByMode = {};
 
       for (const mode of modesToFetch) {
         try {
-          
-          const routeResult = await fetchData("http://127.0.0.1:8000/multi_route", {
-            origins: origin,
-            waypoints: destinations.slice(0, -1).join("|"),
-            destination: destinations[destinations.length - 1],
-            travelMode: mode,
-          });
+          const routeResult = await fetchData(
+            "http://127.0.0.1:8000/multi_route",
+            {
+              origins: origin,
+              waypoints: destinations.slice(0, -1).join("|"),
+              destination: destinations[destinations.length - 1],
+              travelMode: mode,
+            }
+          );
 
           if (routeResult.routes && routeResult.routes.length > 0) {
             routesData[mode] = routeResult.routes[0];
           }
         } catch (error) {
-          
           console.warn(`Could not fetch route for mode ${mode}: `, error);
         }
       }
 
       setRoutesByMode(routesData);
 
-      const primaryRoute = routesData['DRIVE'] ? [routesData['DRIVE']] : [];
+      const primaryRoute = routesData["DRIVE"] ? [routesData["DRIVE"]] : [];
       setRouteLegs(primaryRoute);
 
       // Nearby attractions for last destination
@@ -136,7 +143,7 @@ const RoutePanel: React.FC<RoutePanelProps> = ({
           }))
         );
       } else {
-        setPlaces([]); 
+        setPlaces([]);
       }
 
       const allTz = await Promise.all(
@@ -181,7 +188,9 @@ const RoutePanel: React.FC<RoutePanelProps> = ({
 
       {/* Destinations */}
       <div className="mb-4">
-        <label className="block text-gray-700 font-medium">Add Destination</label>
+        <label className="block text-gray-700 font-medium">
+          Add Destination
+        </label>
         <div className="flex gap-2">
           <input
             value={newDest}
@@ -205,11 +214,12 @@ const RoutePanel: React.FC<RoutePanelProps> = ({
           {destinations.map((d, i) => (
             <p key={i} className="text-gray-600">
               {d}{" "}
-              {destinationTimezones[i] && destinationTimezones[i] !== "Unknown" && (
-                <small className="ml-2 text-gray-500">
-                  (Local: <TimeDisplay tz={destinationTimezones[i]} />)
-                </small>
-              )}
+              {destinationTimezones[i] &&
+                destinationTimezones[i] !== "Unknown" && (
+                  <small className="ml-2 text-gray-500">
+                    (Local: <TimeDisplay tz={destinationTimezones[i]} />)
+                  </small>
+                )}
             </p>
           ))}
         </div>
@@ -217,7 +227,9 @@ const RoutePanel: React.FC<RoutePanelProps> = ({
 
       {/* Budget */}
       <div className="mb-5">
-        <label className="block text-gray-700 font-medium">Budget Preference</label>
+        <label className="block text-gray-700 font-medium">
+          Budget Preference
+        </label>
         <select
           value={budget}
           onChange={(e) => setBudget(e.target.value)}

@@ -20,7 +20,7 @@ export default function EditItinerary() {
   });
 
   // UI state variables
-  const [showGuestMenu, setShowGuestMenu] = useState(false);
+  const [_, setShowGuestMenu] = useState(false);
 
   // Chat Window
   const [messages, setMessages] = useState<
@@ -68,6 +68,8 @@ export default function EditItinerary() {
       }),
     });
 
+    console.log(guests);
+
     const result = await response.json();
     console.log("FETCHED ITINERARY:", result);
 
@@ -90,11 +92,9 @@ export default function EditItinerary() {
     setSelectedTab(loadedDates[0]);
     setShowResults(true);
     setLoading(false);
-    // Return dates so fetchFood can use them immediately
-    return { firstDate, lastDate };
   };
 
-  const fetchFood = async (userId: string, startDate: Date, endDate: Date) => {
+  const fetchFood = async (userId: string) => {
     // Dates are currently unused here because food options are persisted in Supabase
     if (!itinerary_id) return;
 
@@ -146,8 +146,8 @@ export default function EditItinerary() {
     const loadData = async () => {
       setLoading(true);
       try {
-        const { firstDate, lastDate } = await fetchItinerary(user.id);
-        await fetchFood(user.id, firstDate, lastDate);
+        await fetchItinerary(user.id);
+        await fetchFood(user.id);
       } catch (error) {
         console.error(error);
         alert("Error loading itinerary");

@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from "react";
+import { useState, useEffect } from "react";
 import axios from "axios";
 import MapView from "../components/MapView";
 import { useParams } from "react-router-dom";
@@ -6,15 +6,13 @@ import { supabase } from "../supabaseClient";
 import { Car, Footprints, Bike, Bus, Clock, MapPin } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 
-const BACKEND_URL = "http://127.0.0.1:8000";
-
 export default function TripSummary() {
   const { itinerary_id } = useParams();
   const navigate = useNavigate();
 
   const [loading, setLoading] = useState(true);
   const [itinerary, setItinerary] = useState<any>(null);
-  const [activities, setActivities] = useState<any[]>([]);
+  const [_, setActivities] = useState<any[]>([]);
   const [coords, setCoords] = useState<{ lat: number; lng: number }[]>([]);
   const [travelTimesMap, setTravelTimesMap] = useState<Record<string, string>>(
     {}
@@ -304,11 +302,6 @@ export default function TripSummary() {
     setTravelTimesMap(map);
   };
 
-  // get index in flattened activities (if you still need global index)
-  const getGlobalIndex = (activityId: string) => {
-    return activities.findIndex((a) => a.id === activityId);
-  };
-
   // Export function
   const exportItinerary = () => {
     if (!itinerary || !itinerary.itinerary_days) return;
@@ -481,9 +474,6 @@ export default function TripSummary() {
 
               <div className="space-y-8 relative border-l-2 border-blue-100 ml-3 pl-8 pb-4">
                 {currentDay.activities.map((act: any, i: number) => {
-                  // global index if needed
-                  const globalIdx = getGlobalIndex(act.id);
-
                   // get per-day travel time (time from this activity to NEXT in same day)
                   const timeToNext = travelTimesMap[act.id];
 

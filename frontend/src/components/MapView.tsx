@@ -6,7 +6,11 @@ interface MapViewProps {
   onMapLoad?: (map: google.maps.Map) => void;
 }
 
-const MapView: React.FC<MapViewProps> = ({ coords, markerLabels, onMapLoad }) => {
+const MapView: React.FC<MapViewProps> = ({
+  coords,
+  markerLabels,
+  onMapLoad,
+}) => {
   const mapRef = useRef<HTMLDivElement>(null);
   const mapInstance = useRef<google.maps.Map | null>(null);
   const markers = useRef<google.maps.Marker[]>([]);
@@ -19,7 +23,7 @@ const MapView: React.FC<MapViewProps> = ({ coords, markerLabels, onMapLoad }) =>
     mapInstance.current = new google.maps.Map(mapRef.current, {
       center: { lat: 39.8283, lng: -98.5795 }, // USA center
       zoom: 4,
-      mapId: "DEMO_MAP_ID"
+      mapId: "DEMO_MAP_ID",
     });
     if (onMapLoad) onMapLoad(mapInstance.current);
   }, []);
@@ -55,7 +59,6 @@ const MapView: React.FC<MapViewProps> = ({ coords, markerLabels, onMapLoad }) =>
           color: "white",
           fontWeight: "bold",
         },
-        
       });
       markers.current.push(marker);
       bounds.extend(c);
@@ -68,11 +71,11 @@ const MapView: React.FC<MapViewProps> = ({ coords, markerLabels, onMapLoad }) =>
         strokeColor: "#4285F4",
         strokeOpacity: 0.9,
         strokeWeight: 4,
-        map: mapInstance.current
+        map: mapInstance.current,
       });
     }
     mapInstance.current.fitBounds(bounds);
-    }, [coords, markerLabels]);
+  }, [coords, markerLabels]);
 
   return (
     <div

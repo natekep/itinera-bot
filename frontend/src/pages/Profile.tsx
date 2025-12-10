@@ -3,21 +3,13 @@ import { Link, useNavigate } from "react-router-dom";
 import type { User } from "@supabase/supabase-js";
 import { supabase } from "../supabaseClient";
 import { BsAirplane } from "react-icons/bs";
-import {
-  User as UserIcon,
-  MapPin,
-  Compass,
-  Heart,
-  Accessibility,
-  Wallet,
-  Plane,
-} from "lucide-react";
+import { User as UserIcon, MapPin } from "lucide-react";
 
 const Profile = () => {
   const navigate = useNavigate();
   const [user, setUser] = useState<User | null>(null);
   const [loading, setLoading] = useState(true);
-  const [preferences, setPreferences] = useState({
+  const [_, setPreferences] = useState({
     user_id: "",
     created_at: "",
     preferred_pace: "",

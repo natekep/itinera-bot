@@ -5,7 +5,7 @@
     { "path": "./tsconfig.node.json" }
   ],
   "compilerOptions": {
-    "types": ["@types/google.maps"],
+    "types": ["@types/google.maps", "google.maps"],
     "strict": true,
     "jsx": "react-jsx"
   }

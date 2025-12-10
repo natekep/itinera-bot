@@ -9,7 +9,7 @@ export default function SignUp() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
-  const [errorMessage, setErrorMessage] = useState("");
+  const [_, setErrorMessage] = useState("");
 
   // alert modal states
   const [modalOpen, setModalOpen] = useState(false);
@@ -51,6 +51,8 @@ export default function SignUp() {
         emailRedirectTo: `${window.location.origin}/onboarding`,
       },
     });
+
+    if (error) return;
 
     // Check if email confirmation is required
     if (data.user && !data.session) {
