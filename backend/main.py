@@ -27,6 +27,8 @@ origins = [
     "http://127.0.0.1:5173",
     "https://itinera-bot.web.app",
     "http://localhost:5174",
+    "https://9zcht85eo3.execute-api.us-east-2.amazonaws.com",
+    "https://itinera-52f68.web.app",
 ]
 
 

@@ -15,6 +15,7 @@ export default function CreateItinerary() {
   const [destination, setDestination] = useState("");
   const [checkInDate, setCheckInDate] = useState<Date | null>(null);
   const [checkOutDate, setCheckOutDate] = useState<Date | null>(null);
+  const [isSaving, setIsSaving] = useState(false);
   const [guests, setGuests] = useState({
     adults: 0,
     children: 0,
@@ -163,9 +164,9 @@ export default function CreateItinerary() {
   const geocodeAddress = async (address: string) => {
     try {
       const res = await fetch(
-        `http://3.136.161.243:8000/geocode?address=${encodeURIComponent(
-          address
-        )}`
+        `${
+          import.meta.env.VITE_API_BASE_URL
+        }/geocode?address=${encodeURIComponent(address)}`
       );
       const data = await res.json();
 
@@ -197,7 +198,7 @@ export default function CreateItinerary() {
 
     try {
       const response = await fetch(
-        "http://3.136.161.243:8000/generate-itinerary",
+        `${import.meta.env.VITE_API_BASE_URL}/generate-itinerary`,
         {
           method: "POST",
           headers: { "Content-Type": "application/json" },
@@ -227,17 +228,20 @@ export default function CreateItinerary() {
 
     // Get food options
     try {
-      const response = await fetch("http://3.136.161.243:8000/generate-food", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          user_id: user.id,
-          destination: destination,
-          start_date: checkInDate,
-          end_date: checkOutDate,
-          num_guests: `${guests.adults} adults, ${guests.children} children, ${guests.infants} infants, ${guests.pets} pets`,
-        }),
-      });
+      const response = await fetch(
+        `${import.meta.env.VITE_API_BASE_URL}/generate-food`,
+        {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            user_id: user.id,
+            destination: destination,
+            start_date: checkInDate,
+            end_date: checkOutDate,
+            num_guests: `${guests.adults} adults, ${guests.children} children, ${guests.infants} infants, ${guests.pets} pets`,
+          }),
+        }
+      );
 
       const result = await response.json();
       console.log("FOOD:", result);
@@ -339,7 +343,7 @@ export default function CreateItinerary() {
 
     try {
       const response = await fetch(
-        "http://3.136.161.243:8000/regenerate-itinerary",
+        `${import.meta.env.VITE_API_BASE_URL}/regenerate-itinerary`,
         {
           method: "POST",
           headers: { "Content-Type": "application/json" },
@@ -371,17 +375,20 @@ export default function CreateItinerary() {
   };
 
   const saveFinalItinerary = async () => {
+    setIsSaving(true);
     const {
       data: { user },
     } = await supabase.auth.getUser();
 
     if (!user) {
       alert("Not logged in!");
+      setIsSaving(false);
       return;
     }
 
     if (!itinerary) {
       alert("No itinerary to save");
+      setIsSaving(false);
       return;
     }
 
@@ -402,6 +409,7 @@ export default function CreateItinerary() {
     if (itineraryErr) {
       console.error(itineraryErr);
       alert("Error saving itinerary");
+      setIsSaving(false);
       return;
     }
 
@@ -423,6 +431,7 @@ export default function CreateItinerary() {
     if (dayErr) {
       console.error(dayErr);
       alert("Error saving itinerary days");
+      setIsSaving(false);
       return;
     }
 
@@ -462,6 +471,7 @@ export default function CreateItinerary() {
     if (actErr) {
       console.error(actErr);
       alert("Error saving activities");
+      setIsSaving(false);
       return;
     }
 
@@ -493,11 +503,13 @@ export default function CreateItinerary() {
       if (foodErr) {
         console.error(foodErr);
         alert("Error saving food options");
+        setIsSaving(false);
         return;
       }
     }
 
     setShowSavedModal(true);
+    setIsSaving(false);
 
     setTimeout(() => {
       setShowSavedModal(false);
@@ -1012,12 +1024,20 @@ export default function CreateItinerary() {
               {/* Save */}
               <button
                 onClick={saveFinalItinerary}
+                disabled={isSaving}
                 className="
       flex items-center gap-2 bg-[#4b8ce8] text-white px-6 py-3 rounded-full
       hover:bg-blue-600 hover:shadow-md transition-all duration-200
+      disabled:opacity-60 disabled:cursor-not-allowed disabled:hover:shadow-none
     "
               >
-                💾 <span>Save & Continue</span>
+                {isSaving ? (
+                  <span>Saving...</span>
+                ) : (
+                  <>
+                    💾 <span>Save & Continue</span>
+                  </>
+                )}
               </button>
             </div>
           </div>

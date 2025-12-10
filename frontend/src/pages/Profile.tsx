@@ -356,59 +356,65 @@ const Profile = () => {
               )}
               {itineraries.length !== 0 && (
                 <div className="mt-6 grid grid-cols-1 gap-4 w-full">
-                  {itineraries.map((itinerary) => (
-                    <div
-                      key={itinerary.id}
-                      className="w-full border border-gray-200 rounded-lg p-4 flex flex-col gap-2 bg-white/60"
-                    >
-                      <div className="flex items-start justify-between gap-3">
-                        <div>
-                          <p className="text-sm text-gray-500">Trip</p>
-                          <p className="text-lg font-semibold text-gray-900">
-                            {itinerary.title ||
-                              `Trip to ${itinerary.destination}`}
-                          </p>
-                          <p className="text-sm text-gray-600">
-                            {itinerary.destination}
-                          </p>
-                        </div>
-                        <div className="text-right text-xs text-gray-500">
-                          <p>
-                            Created:{" "}
-                            {itinerary.created_at
-                              ? new Date(
-                                  itinerary.created_at
-                                ).toLocaleDateString()
-                              : "—"}
-                          </p>
-                          <p className="mt-1">
-                            Guests: {itinerary.num_guests || 1}
-                          </p>
-                          <Link
-                            to={`/edit/${itinerary.id}`}
-                            className="
+                  {itineraries
+                    .sort(
+                      (a, b) =>
+                        new Date(b.created_at).getTime() -
+                        new Date(a.created_at).getTime()
+                    )
+                    .map((itinerary) => (
+                      <div
+                        key={itinerary.id}
+                        className="w-full border border-gray-200 rounded-lg p-4 flex flex-col gap-2 bg-white/60"
+                      >
+                        <div className="flex items-start justify-between gap-3">
+                          <div>
+                            <p className="text-sm text-gray-500">Trip</p>
+                            <p className="text-lg font-semibold text-gray-900">
+                              {itinerary.title ||
+                                `Trip to ${itinerary.destination}`}
+                            </p>
+                            <p className="text-sm text-gray-600">
+                              {itinerary.destination}
+                            </p>
+                          </div>
+                          <div className="text-right text-xs text-gray-500">
+                            <p>
+                              Created:{" "}
+                              {itinerary.created_at
+                                ? new Date(
+                                    itinerary.created_at
+                                  ).toLocaleDateString()
+                                : "—"}
+                            </p>
+                            <p className="mt-1">
+                              Guests: {itinerary.num_guests || 1}
+                            </p>
+                            <Link
+                              to={`/edit/${itinerary.id}`}
+                              className="
                               inline-block mt-2 px-3 py-1.5 rounded-lg text-xs font-semibold
                               bg-gradient-to-r from-[#6fb3ff] to-[#4b8ce8] text-white
                               shadow-sm hover:shadow-md transition hover:scale-105
                             "
-                          >
-                            Edit Itinerary
-                          </Link>
+                            >
+                              Edit Itinerary
+                            </Link>
+                          </div>
                         </div>
-                      </div>
 
-                      <div className="mt-1 flex items-center justify-between text-sm text-gray-700">
-                        <div>
-                          <span className="text-gray-500 text-xs">Dates</span>
-                          <p className="text-sm">
-                            {itinerary.start_date}
-                            <span className="text-gray-400 mx-1">→</span>
-                            {itinerary.end_date}
-                          </p>
+                        <div className="mt-1 flex items-center justify-between text-sm text-gray-700">
+                          <div>
+                            <span className="text-gray-500 text-xs">Dates</span>
+                            <p className="text-sm">
+                              {itinerary.start_date}
+                              <span className="text-gray-400 mx-1">→</span>
+                              {itinerary.end_date}
+                            </p>
+                          </div>
                         </div>
                       </div>
-                    </div>
-                  ))}
+                    ))}
                 </div>
               )}
             </div>

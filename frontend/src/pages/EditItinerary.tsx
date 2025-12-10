@@ -59,14 +59,17 @@ export default function EditItinerary() {
   const fetchItinerary = async (userId: string) => {
     setLoading(true);
 
-    const response = await fetch("http://3.136.161.243:8000/fetch-itinerary", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        itinerary_id,
-        user_id: userId,
-      }),
-    });
+    const response = await fetch(
+      `${import.meta.env.VITE_API_BASE_URL}/fetch-itinerary`,
+      {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          itinerary_id,
+          user_id: userId,
+        }),
+      }
+    );
 
     console.log(guests);
 
@@ -278,7 +281,7 @@ export default function EditItinerary() {
 
     try {
       const response = await fetch(
-        "http://3.136.161.243:8000/regenerate-itinerary",
+        `${import.meta.env.VITE_API_BASE_URL}/regenerate-itinerary`,
         {
           method: "POST",
           headers: { "Content-Type": "application/json" },
