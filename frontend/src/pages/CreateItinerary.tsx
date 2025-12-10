@@ -314,6 +314,8 @@ export default function CreateItinerary() {
   // Handle itinerary regen
   const regenerateItinerary = async () => {
     setLoading(true);
+    // Hide results panel
+    setShowResults(false);
 
     const {
       data: { user },
@@ -360,6 +362,7 @@ export default function CreateItinerary() {
       setItinerary(result.itinerary);
       setSelections({}); // reset selection states
       setLoading(false);
+      setShowResults(true);
     } catch (error) {
       console.error(error);
       alert("Error regenerating itinerary");
